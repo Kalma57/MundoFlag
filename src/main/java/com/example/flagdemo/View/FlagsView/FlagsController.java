@@ -10,12 +10,14 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.ui.Model;
 import jakarta.servlet.http.HttpSession;
 
 import javax.imageio.ImageIO;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.sql.SQLException;
 import java.util.*;
 
@@ -91,26 +93,8 @@ public class FlagsController {
 
         viewModel.Guess(countryName);
 
-        CountryBL targetCountry = viewModel.getTargetCountry();
-
         if (viewModel.isCorrect()) {
-            int attempts = viewModel.getAttemps();
-
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            ImageIO.write(targetCountry.getFlagImage(), "png", baos);
-            String countryImage = Base64.getEncoder().encodeToString(baos.toByteArray());
-
-            model.addAttribute("success",      true);
-            model.addAttribute("attempts",     attempts);
-            model.addAttribute("countryName",  targetCountry.getName());
-            model.addAttribute("countryImage", countryImage);
-            model.addAttribute("guesses",      buildGuessList(viewModel));
-            model.addAttribute("difficulty",   viewModel.getDifficulty());
-
-            // Game is over — release the ViewModel (and its guess/image history) from the session
-            session.removeAttribute("flagsVM_" + gameId);
-
-            return "FlagsScreens/FlagsEndScreen";
+            return endScreen(viewModel, true, gameId, model, session);
         }
 
         model.addAttribute("guesses",   buildGuessList(viewModel));
@@ -123,6 +107,67 @@ public class FlagsController {
         return "FlagsScreens/FlagsGameScreen";
     }
 
+    /**
+     * One guess, answered with just that guess instead of a whole re-rendered page.
+     *
+     * The classic POST /guess above rebuilds the entire game page, including every earlier guess
+     * and its images, on every guess - so each request cost more than the last and sent
+     * 150-280 KB back. This returns ~3 KB: the new row's name, the (browser-cached) guessed flag
+     * file, and the result image. The target country never leaves the server until the game is
+     * over, exactly as before.
+     */
+    @PostMapping("/guess/ajax")
+    @ResponseBody
+    public Map<String, Object> guessAjax(
+            @RequestParam("countryName") String countryName,
+            @RequestParam("gameId") String gameId,
+            HttpSession session) throws SQLException {
+
+        Map<String, Object> data = new LinkedHashMap<>();
+        FlagsViewModel viewModel = (FlagsViewModel) session.getAttribute("flagsVM_" + gameId);
+        if (viewModel == null) {
+            data.put("ok", false);
+            data.put("error", "This game has expired. Please start a new one.");
+            data.put("expired", true);
+            return data;
+        }
+        if (viewModel.isCorrect()) {
+            data.put("ok", true);
+            data.put("finished", true);
+            return data;
+        }
+        if (countryController.getCountryByName(countryName.trim()) == null) {
+            data.put("ok", false);
+            data.put("error", "Pick a country from the list.");
+            return data;
+        }
+
+        viewModel.Guess(countryName.trim());
+        List<GuessResultBL> guesses = viewModel.getGuesses();
+        GuessResultBL last = guesses.get(guesses.size() - 1);
+
+        data.put("ok", true);
+        data.put("finished", last.isCorrect());
+        data.put("attempts", viewModel.getAttemps());
+        data.put("guessedName", last.getGuessedCountry().getName());
+        data.put("guessedFlagFile", Paths.get(last.getGuessedCountry().getFlagPath()).getFileName().toString());
+        data.put("resultImage", last.getFlagDifferencesBase64());
+        last.releaseImage();
+        return data;
+    }
+
+    /** Shows the end screen for a game whose last guess was already made through /guess/ajax. */
+    @PostMapping("/finish")
+    public String finish(
+            @RequestParam("gameId") String gameId,
+            Model model,
+            HttpSession session) throws SQLException, IOException {
+
+        FlagsViewModel viewModel = (FlagsViewModel) session.getAttribute("flagsVM_" + gameId);
+        if (viewModel == null) return "redirect:/Flags";
+        return endScreen(viewModel, viewModel.isCorrect(), gameId, model, session);
+    }
+
     @PostMapping("/giveup")
     public String giveUp(
             @RequestParam("gameId") String gameId,        // received from hidden form field
@@ -133,15 +178,20 @@ public class FlagsController {
         FlagsViewModel viewModel =
                 (FlagsViewModel) session.getAttribute("flagsVM_" + gameId);
 
-        int attempts = viewModel.getAttemps();
+        return endScreen(viewModel, false, gameId, model, session);
+    }
+
+    /** The end-of-game page: the answer, the attempt count and the whole guess history. */
+    private String endScreen(FlagsViewModel viewModel, boolean success, String gameId,
+                             Model model, HttpSession session) throws IOException {
         CountryBL targetCountry = viewModel.getTargetCountry();
 
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         ImageIO.write(targetCountry.getFlagImage(), "png", baos);
         String countryImage = Base64.getEncoder().encodeToString(baos.toByteArray());
 
-        model.addAttribute("success",      false);
-        model.addAttribute("attempts",     attempts);
+        model.addAttribute("success",      success);
+        model.addAttribute("attempts",     viewModel.getAttemps());
         model.addAttribute("countryName",  targetCountry.getName());
         model.addAttribute("countryImage", countryImage);
         model.addAttribute("guesses",      buildGuessList(viewModel));
@@ -168,6 +218,7 @@ public class FlagsController {
             guessData.put("guessedImage", gr.getGuessedFlagBase64());
             guessData.put("guessedName",  gr.getGuessedCountry().getName());
             guessData.put("resultImage",  gr.getFlagDifferencesBase64());
+            gr.releaseImage();
 
             guessList.add(guessData);
         }
