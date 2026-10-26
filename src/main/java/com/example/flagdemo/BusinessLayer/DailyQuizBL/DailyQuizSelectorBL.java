@@ -47,7 +47,8 @@ public final class DailyQuizSelectorBL {
     /** The decryption key reaches the server only through this environment variable. */
     private static final String KEY_ENV = "DAILY_QUIZ_KEY";
     private static final int PBKDF2_ITERATIONS = 200_000;
-    private static final Duration FETCH_TIMEOUT = Duration.ofSeconds(5);
+    // Generous: this runs in the background, and a small host that is still starting up is slow
+    private static final Duration DOWNLOAD_TIMEOUT = Duration.ofSeconds(30);
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
     private static volatile LocalDate cachedFetchDate;
@@ -59,6 +60,7 @@ public final class DailyQuizSelectorBL {
     private static final long REFRESH_MINUTES = 30;
     private static final long FIRST_LOAD_WAIT_SECONDS = 25;
     private static volatile boolean backgroundRefresh;
+    private static volatile boolean gaveUpWaiting;
     private static final java.util.concurrent.CountDownLatch FIRST_LOAD = new java.util.concurrent.CountDownLatch(1);
 
     private DailyQuizSelectorBL() {}
@@ -132,9 +134,11 @@ public final class DailyQuizSelectorBL {
     }
 
     /**
-     * Starts refreshing the weekly file in the background: once right away (so the first visitors
-     * after a restart don't wait on it) and then every {@value #REFRESH_MINUTES} minutes, which
-     * also picks up a file the weekly routine updates in the middle of the day.
+     * Starts refreshing the weekly file in the background: right away (so the first visitors after a
+     * restart don't wait on it) and then every {@value #REFRESH_MINUTES} minutes, which also picks up
+     * a file the weekly routine updates in the middle of the day. A failed attempt (the host is
+     * busy starting up, GitHub hiccups) is retried after a few seconds, backing off up to 5 minutes,
+     * instead of waiting for the next half hour.
      */
     public static void startBackgroundRefresh() {
         if (backgroundRefresh) return;
@@ -145,15 +149,33 @@ public final class DailyQuizSelectorBL {
             thread.setPriority(Thread.MIN_PRIORITY);
             return thread;
         });
-        executor.scheduleWithFixedDelay(() -> {
+        scheduleRefresh(executor, 0, 0);
+    }
+
+    private static void scheduleRefresh(java.util.concurrent.ScheduledExecutorService executor, long delaySeconds, int failures) {
+        executor.schedule(() -> {
+            long nextDelay = REFRESH_MINUTES * 60;
+            int nextFailures = 0;
             try {
-                refreshFromGitHub(LocalDate.now());
-            } catch (Exception ignored) {
-                // keep serving the previous copy, or the date-seeded fallback
-            } finally {
-                FIRST_LOAD.countDown();
+                if (secretKey() == null) {
+                    FIRST_LOAD.countDown(); // nothing to download without the key: the fallback pick is used
+                } else {
+                    JsonNode days = downloadDays();
+                    if (days != null) {
+                        store(days, LocalDate.now());
+                        FIRST_LOAD.countDown();
+                    } else {
+                        throw new IllegalStateException("no usable data in the downloaded file");
+                    }
+                }
+            } catch (Exception e) {
+                nextFailures = failures + 1;
+                nextDelay = Math.min(300, 5L << Math.min(nextFailures - 1, 6));
+                System.err.println("[daily-quiz] refresh failed (attempt " + nextFailures + "), retrying in "
+                        + nextDelay + "s: " + e);
             }
-        }, 0, REFRESH_MINUTES, java.util.concurrent.TimeUnit.MINUTES);
+            scheduleRefresh(executor, nextDelay, nextFailures);
+        }, delaySeconds, java.util.concurrent.TimeUnit.SECONDS);
     }
 
     /** The cached weekly file; waits (once, right after a restart) for the first background load. */
@@ -161,46 +183,60 @@ public final class DailyQuizSelectorBL {
         if (!backgroundRefresh) {
             return refreshFromGitHub(today); // no background thread (tests, dev): fetch on demand
         }
-        if (cachedDays == null) {
+        if (cachedDays == null && !gaveUpWaiting) {
             try {
                 FIRST_LOAD.await(FIRST_LOAD_WAIT_SECONDS, java.util.concurrent.TimeUnit.SECONDS);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
             }
+            // Still nothing after the grace period: stop making visitors wait; they get the
+            // fallback pick until a background retry succeeds
+            if (cachedDays == null) gaveUpWaiting = true;
         }
         return cachedDays;
     }
 
-    /** Downloads, decrypts and caches the whole "days" object. */
+    private static synchronized void store(JsonNode days, LocalDate date) {
+        cachedDays = days;
+        cachedFetchDate = date;
+    }
+
+    /** On-demand path (no background thread): downloads, decrypts and caches the file once per day. */
     private static synchronized JsonNode refreshFromGitHub(LocalDate today) throws Exception {
-        if (!backgroundRefresh && cachedFetchDate != null && cachedFetchDate.equals(today) && cachedDays != null) {
+        if (cachedFetchDate != null && cachedFetchDate.equals(today) && cachedDays != null) {
             return cachedDays;
         }
+        if (secretKey() == null) {
+            return cachedDays;
+        }
+        JsonNode days = downloadDays();
+        if (days == null) {
+            return cachedDays; // keep serving yesterday's cache rather than nothing, if any
+        }
+        store(days, today);
+        return cachedDays;
+    }
 
+    /**
+     * Downloads and decrypts the weekly file and returns its "days" object, or null if the response
+     * was not usable. Throws on network or decryption problems.
+     */
+    private static JsonNode downloadDays() throws Exception {
         String key = secretKey();
-        if (key == null) {
-            return cachedDays;
-        }
+        if (key == null) return null;
 
-        HttpClient client = HttpClient.newBuilder().connectTimeout(FETCH_TIMEOUT).build();
+        HttpClient client = HttpClient.newBuilder().connectTimeout(DOWNLOAD_TIMEOUT).build();
         HttpRequest request = HttpRequest.newBuilder(URI.create(EVENTS_URL))
-                .timeout(FETCH_TIMEOUT)
+                .timeout(DOWNLOAD_TIMEOUT)
                 .GET()
                 .build();
         HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
         if (response.statusCode() != 200) {
-            return cachedDays; // keep serving yesterday's cache rather than nothing, if any
+            throw new IllegalStateException("GitHub answered HTTP " + response.statusCode());
         }
 
-        JsonNode root = MAPPER.readTree(decrypt(response.body(), key));
-        JsonNode days = root.get("days");
-        if (days == null || !days.isObject()) {
-            return cachedDays;
-        }
-
-        cachedDays = days;
-        cachedFetchDate = today;
-        return cachedDays;
+        JsonNode days = MAPPER.readTree(decrypt(response.body(), key)).get("days");
+        return (days != null && days.isObject()) ? days : null;
     }
 
     private static String secretKey() {
