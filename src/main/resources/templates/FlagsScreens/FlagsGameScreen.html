@@ -172,6 +172,16 @@
             box-shadow: var(--shadow-md);
         }
 
+        .guess-error {
+            margin-top: 14px;
+            padding: 8px 16px;
+            border-radius: 10px;
+            background: rgba(198, 40, 40, 0.1);
+            color: #b71c1c;
+            font-weight: 600;
+        }
+        .guess-error[hidden] { display: none; }
+
         /* Guesses list container */
         .guesses {
             display: flex;
@@ -331,7 +341,9 @@
 <button class="rules-btn" onclick="openRules()">RULES</button>
 
 <!-- Guesses list — populated by Thymeleaf -->
-<div class="guesses" th:if="${guesses}">
+<div class="guess-error" id="guessError" role="alert" hidden></div>
+
+<div class="guesses" id="guesses">
     <div th:each="guess, iterStat : ${guesses}" class="guess-row">
 
         <div class="flag guessed-flag">
@@ -377,6 +389,92 @@
     document.addEventListener("keydown", function (e) {
         if (e.key === "Escape") closeRules();
     });
+
+    // A guess is sent in the background and only the new row is added to the page. (The old way
+    // re-rendered and re-sent the whole page, with every earlier guess, after every guess.)
+    (function () {
+        const form = document.querySelector('.guess-form');
+        const input = form.querySelector('input[name="countryName"]');
+        const button = form.querySelector('.guess-btn');
+        const list = document.getElementById('guesses');
+        const errorBox = document.getElementById('guessError');
+        const gameId = form.querySelector('input[name="gameId"]').value;
+
+        function showError(message) {
+            errorBox.textContent = message;
+            errorBox.hidden = !message;
+        }
+
+        function finishGame() {
+            const f = document.createElement('form');
+            f.method = 'post';
+            f.action = '/Flags/finish';
+            const field = document.createElement('input');
+            field.type = 'hidden';
+            field.name = 'gameId';
+            field.value = gameId;
+            f.appendChild(field);
+            document.body.appendChild(f);
+            f.submit();
+        }
+
+        function addRow(guess) {
+            const row = document.createElement('div');
+            row.className = 'guess-row';
+
+            const guessedBox = document.createElement('div');
+            guessedBox.className = 'flag guessed-flag';
+            const guessedLabel = document.createElement('div');
+            guessedLabel.className = 'guess-label';
+            guessedLabel.textContent = 'guess ' + (list.children.length + 1) + ': ' + guess.guessedName;
+            const guessedImg = document.createElement('img');
+            guessedImg.alt = 'Guessed Flag';
+            guessedImg.src = '/DB/FlagsImages/' + encodeURIComponent(guess.guessedFlagFile);
+            guessedBox.append(guessedLabel, guessedImg);
+
+            const resultBox = document.createElement('div');
+            resultBox.className = 'flag result-flag';
+            const resultLabel = document.createElement('div');
+            resultLabel.className = 'guess-label';
+            resultLabel.textContent = 'result';
+            const resultImg = document.createElement('img');
+            resultImg.alt = 'Result Flag';
+            resultImg.src = 'data:image/png;base64,' + guess.resultImage;
+            resultBox.append(resultLabel, resultImg);
+
+            row.append(guessedBox, resultBox);
+            list.appendChild(row);
+        }
+
+        form.addEventListener('submit', async function (e) {
+            e.preventDefault();
+            const name = input.value.trim();
+            if (!name) return;
+
+            button.disabled = true;
+            showError('');
+            try {
+                const response = await fetch('/Flags/guess/ajax', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: 'gameId=' + encodeURIComponent(gameId) + '&countryName=' + encodeURIComponent(name)
+                });
+                const data = await response.json();
+                if (!data.ok) {
+                    showError(data.error || 'Something went wrong. Please try again.');
+                    return;
+                }
+                if (data.guessedName) addRow(data);
+                if (data.finished) { finishGame(); return; }
+                input.value = '';
+            } catch (err) {
+                showError('Could not reach the server. Check your connection and try again.');
+            } finally {
+                button.disabled = false;
+                input.focus();
+            }
+        });
+    })();
 
     // Global keyboard support: any printable key (or Backspace) jumps focus into the guess
     // input, even if the user hasn't clicked it yet — so the mouse is never required to keep typing.

@@ -73,8 +73,13 @@ public class GuessResultBL implements java.io.Serializable {
     // The actual target country
     private final CountryBL targetCountry;
 
-    // Image showing the visual differences between the two flags
-    private final BufferedImage flagDifferences;
+    // Image showing the visual differences between the two flags. On HARD it is built on first
+    // use (most requests only need the PNG, which is usually already cached - see
+    // DIFF_BASE64_CACHE) and can be dropped again with releaseImage() so a long game does not
+    // keep one full-size image per guess in memory
+    private BufferedImage flagDifferences;
+
+    private final DifficultyLevel difficulty;
 
     // Base64-encoded PNG of the guessed flag, computed on first use (the AI opponent builds
     // dozens of these results only to read a percentage and never needs the image) and
@@ -127,6 +132,7 @@ public class GuessResultBL implements java.io.Serializable {
     public GuessResultBL(CountryBL guessedCountry, CountryBL targetCountry, DifficultyLevel difficulty, BufferedImage previousEasyReveal) {
         this.guessedCountry = guessedCountry;
         this.targetCountry = targetCountry;
+        this.difficulty = difficulty;
 
         // Determine if the guess is correct
         this.isCorrect = guessedCountry.equals(targetCountry);
@@ -139,9 +145,8 @@ public class GuessResultBL implements java.io.Serializable {
                     targetCountry.getFlagImage(),
                     gridFor(targetCountry)
             );
-        } else {
-            this.flagDifferences = diffFromGrids(gridFor(guessedCountry), gridFor(targetCountry));
         }
+        // HARD: built lazily, see getFlagDifferences()
     }
 
     // ----------------- Public Methods -----------------
@@ -179,8 +184,20 @@ public class GuessResultBL implements java.io.Serializable {
      *
      * @return difference image
      */
-    public BufferedImage getFlagDifferences() {
+    public synchronized BufferedImage getFlagDifferences() {
+        if (flagDifferences == null && difficulty != DifficultyLevel.EASY) {
+            flagDifferences = diffFromGrids(gridFor(guessedCountry), gridFor(targetCountry));
+        }
         return flagDifferences;
+    }
+
+    /**
+     * Frees the difference image once its PNG has been produced. A HARD image can be rebuilt on
+     * demand; an EASY one is carried forward by the game engine, which keeps its own reference.
+     */
+    public synchronized void releaseImage() {
+        getFlagDifferencesBase64();
+        flagDifferences = null;
     }
 
     /**
@@ -197,9 +214,22 @@ public class GuessResultBL implements java.io.Serializable {
     /**
      * Returns the base64-encoded PNG of the flag difference image (computed on first use).
      */
-    public String getFlagDifferencesBase64() {
-        if (flagDifferencesBase64 == null) {
+    public synchronized String getFlagDifferencesBase64() {
+        if (flagDifferencesBase64 != null) return flagDifferencesBase64;
+
+        if (difficulty == DifficultyLevel.EASY) {
+            // Depends on every earlier guess of the round, so it can never be shared
             flagDifferencesBase64 = encodeToBase64(flagDifferences);
+        } else {
+            // HARD depends only on the two flags, so every player who makes the same guess against
+            // the same target gets the same PNG: build it once and reuse it
+            String key = guessedCountry.getFlagPath() + '|' + targetCountry.getFlagPath();
+            String cached = DIFF_BASE64_CACHE.get(key);
+            if (cached == null) {
+                cached = encodeToBase64(getFlagDifferences());
+                DIFF_BASE64_CACHE.put(key, cached);
+            }
+            flagDifferencesBase64 = cached;
         }
         return flagDifferencesBase64;
     }
@@ -254,6 +284,18 @@ public class GuessResultBL implements java.io.Serializable {
 
     private static final Map<String, FlagGrid> GRID_CACHE = new ConcurrentHashMap<>();
     private static final Map<String, String> FLAG_BASE64_CACHE = new ConcurrentHashMap<>();
+
+    // Result PNG per (guessed flag, target flag) pair, HARD mode only. There are only ~250 x 250
+    // pairs, and popular guesses repeat across players, so this saves most of the work under load.
+    // Bounded (least recently used goes first) so memory stays small: ~3 KB per entry.
+    private static final int DIFF_CACHE_MAX_ENTRIES = 6000;
+    private static final Map<String, String> DIFF_BASE64_CACHE = java.util.Collections.synchronizedMap(
+            new java.util.LinkedHashMap<>(256, 0.75f, true) {
+                @Override
+                protected boolean removeEldestEntry(Map.Entry<String, String> eldest) {
+                    return size() > DIFF_CACHE_MAX_ENTRIES;
+                }
+            });
 
     private static FlagGrid gridFor(CountryBL country) {
         return GRID_CACHE.computeIfAbsent(country.getFlagPath(), k -> buildGrid(country.getFlagImage()));
