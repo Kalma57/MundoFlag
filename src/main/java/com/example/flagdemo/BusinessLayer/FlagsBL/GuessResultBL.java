@@ -297,6 +297,15 @@ public class GuessResultBL implements java.io.Serializable {
                 }
             });
 
+    /**
+     * Builds (and caches) a flag's pixel grid ahead of time. The first guess that touches a flag
+     * has to read and analyse its image, which on a small host took seconds; doing it in the
+     * background after startup means no player pays for it.
+     */
+    public static void warmUp(CountryBL country) {
+        gridFor(country);
+    }
+
     private static FlagGrid gridFor(CountryBL country) {
         return GRID_CACHE.computeIfAbsent(country.getFlagPath(), k -> buildGrid(country.getFlagImage()));
     }

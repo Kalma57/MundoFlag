@@ -53,6 +53,14 @@ public final class DailyQuizSelectorBL {
     private static volatile LocalDate cachedFetchDate;
     private static volatile JsonNode cachedDays;
 
+    // Once started, the weekly file is downloaded and decrypted by a background thread (see
+    // startBackgroundRefresh), never by a visitor's request: decrypting costs a few seconds of CPU
+    // on a small host, and the first visitor of the day used to pay for all of it (15 s measured).
+    private static final long REFRESH_MINUTES = 30;
+    private static final long FIRST_LOAD_WAIT_SECONDS = 25;
+    private static volatile boolean backgroundRefresh;
+    private static final java.util.concurrent.CountDownLatch FIRST_LOAD = new java.util.concurrent.CountDownLatch(1);
+
     private DailyQuizSelectorBL() {}
 
     public static DailyQuizSelection getTodaysSelection(CountryController cc, Integer devOverrideCountryId) {
@@ -123,9 +131,49 @@ public final class DailyQuizSelectorBL {
         }
     }
 
-    /** Fetches and caches the whole "days" object once per calendar day. */
-    private static synchronized JsonNode getDaysMap(LocalDate today) throws Exception {
-        if (cachedFetchDate != null && cachedFetchDate.equals(today) && cachedDays != null) {
+    /**
+     * Starts refreshing the weekly file in the background: once right away (so the first visitors
+     * after a restart don't wait on it) and then every {@value #REFRESH_MINUTES} minutes, which
+     * also picks up a file the weekly routine updates in the middle of the day.
+     */
+    public static void startBackgroundRefresh() {
+        if (backgroundRefresh) return;
+        backgroundRefresh = true;
+        java.util.concurrent.ScheduledExecutorService executor = java.util.concurrent.Executors.newSingleThreadScheduledExecutor(r -> {
+            Thread thread = new Thread(r, "daily-quiz-refresh");
+            thread.setDaemon(true);
+            thread.setPriority(Thread.MIN_PRIORITY);
+            return thread;
+        });
+        executor.scheduleWithFixedDelay(() -> {
+            try {
+                refreshFromGitHub(LocalDate.now());
+            } catch (Exception ignored) {
+                // keep serving the previous copy, or the date-seeded fallback
+            } finally {
+                FIRST_LOAD.countDown();
+            }
+        }, 0, REFRESH_MINUTES, java.util.concurrent.TimeUnit.MINUTES);
+    }
+
+    /** The cached weekly file; waits (once, right after a restart) for the first background load. */
+    private static JsonNode getDaysMap(LocalDate today) throws Exception {
+        if (!backgroundRefresh) {
+            return refreshFromGitHub(today); // no background thread (tests, dev): fetch on demand
+        }
+        if (cachedDays == null) {
+            try {
+                FIRST_LOAD.await(FIRST_LOAD_WAIT_SECONDS, java.util.concurrent.TimeUnit.SECONDS);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }
+        return cachedDays;
+    }
+
+    /** Downloads, decrypts and caches the whole "days" object. */
+    private static synchronized JsonNode refreshFromGitHub(LocalDate today) throws Exception {
+        if (!backgroundRefresh && cachedFetchDate != null && cachedFetchDate.equals(today) && cachedDays != null) {
             return cachedDays;
         }
 
