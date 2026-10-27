@@ -14,6 +14,10 @@
     try { state = Object.assign(state, JSON.parse(read(sessionStorage, STATE_KEY)) || {}); } catch (e) { /* bad JSON */ }
     let muted = read(localStorage, MUTED_KEY) === '1';
 
+    // Position the new page still has to jump to. Until that jump happens, audio.currentTime
+    // reads 0, so saving it then would wipe the real position and restart the song.
+    let pendingTime = null;
+
     const audio = new Audio();
     audio.preload = 'auto';
     audio.volume = VOLUME;
@@ -21,13 +25,18 @@
     function load(index, startAt) {
         state.track = index % TRACKS.length;
         audio.src = TRACKS[state.track];
-        if (startAt > 0) {
-            audio.addEventListener('loadedmetadata', () => { audio.currentTime = startAt; }, { once: true });
+        pendingTime = startAt > 0 ? startAt : null;
+        if (pendingTime !== null) {
+            audio.addEventListener('loadedmetadata', () => {
+                audio.currentTime = pendingTime;
+                pendingTime = null;
+            }, { once: true });
         }
     }
 
     function save() {
-        write(sessionStorage, STATE_KEY, JSON.stringify({ track: state.track, time: audio.currentTime || 0 }));
+        const time = pendingTime !== null ? pendingTime : (audio.currentTime || 0);
+        write(sessionStorage, STATE_KEY, JSON.stringify({ track: state.track, time: time }));
     }
 
     function tryPlay() {
@@ -47,7 +56,8 @@
 
     // Save the position before leaving the page (pagehide also fires on mobile / bfcache).
     window.addEventListener('pagehide', save);
-    setInterval(save, 2000);
+    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') save(); });
+    setInterval(save, 1000);
 
     // Small mute/unmute button in the corner.
     function buildButton() {

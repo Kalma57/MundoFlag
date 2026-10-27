@@ -102,6 +102,18 @@ public final class DailyQuizSelectorBL {
         );
     }
 
+    /**
+     * Fetches today's feed ahead of time, so the first player of the day doesn't wait
+     * on GitHub + decryption. Safe to call any time - a no-op once today is cached.
+     */
+    public static void warmUp() {
+        try {
+            getDaysMap(LocalDate.now());
+        } catch (Exception e) {
+            // the next real request retries, and falls back if it still fails
+        }
+    }
+
     /** Returns null on anything short of a fully valid, resolvable entry for today - never throws. */
     private static DailyQuizSelection tryAgentSelection(CountryController cc, LocalDate today) {
         try {

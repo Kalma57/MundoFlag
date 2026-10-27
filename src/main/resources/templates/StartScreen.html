@@ -17,6 +17,16 @@
     <meta name="twitter:card" content="summary_large_image">
     <title>MundoFlag</title>
 
+    <!-- Same import map as the globe screens, so /js/preload-globe.js can warm their modules -->
+    <script type="importmap">
+        { "imports": {
+            "three": "/three/three.module.js?v=2",
+            "three/": "/three/",
+            "three-globe": "https://esm.sh/three-globe@2.41.11?external=three,three-conic-polygon-geometry&bundle",
+            "three-conic-polygon-geometry": "/js/conic-polygon-geometry-cache.js?v=1"
+        } }
+    </script>
+
     <!-- Custom font pairing: Baloo 2 for bold display titles, Nunito for everything else -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -508,6 +518,7 @@
     <a href="/credits">Credits</a>
 </footer>
 
-<script src="/js/bg-music.js?v=1"></script>
+<script src="/js/bg-music.js?v=2"></script>
+<script src="/js/preload-globe.js?v=3"></script>
 </body>
 </html>
