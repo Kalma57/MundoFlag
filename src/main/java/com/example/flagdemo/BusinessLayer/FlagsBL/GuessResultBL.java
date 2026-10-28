@@ -321,7 +321,29 @@ public class GuessResultBL implements java.io.Serializable {
         return new FlagGrid(width, height, indexes);
     }
 
-    /** Index of the closest base color (ties go to the earlier one), or GRAY_INDEX if the pixel is not fully opaque. */
+    // Indexes into PALETTE, for readability below
+    private static final int RED_INDEX = 0;
+    private static final int BLUE_INDEX = 1;
+    private static final int YELLOW_INDEX = 2;
+    private static final int GREEN_INDEX = 3;
+    private static final int ORANGE_INDEX = 4;
+    private static final int PURPLE_INDEX = 5;
+    private static final int BLACK_INDEX = 6;
+    private static final int WHITE_INDEX = 7;
+
+    /**
+     * Index of the base color a pixel "looks like" to a human, or GRAY_INDEX if the pixel is not
+     * fully opaque.
+     *
+     * This classifies by hue (HSV), not by raw Euclidean RGB distance. Plain RGB distance judges
+     * colors mostly by brightness, so a dark, muted color ends up nearest to whichever base color
+     * happens to share its brightness rather than its actual hue - e.g. Czechia's official navy
+     * (#11457e) used to land on PURPLE (128,0,128) instead of BLUE, purely because both are dark,
+     * which meant Czechia's blue triangle never matched any other country's blue in a guess. Hue
+     * is what a human actually means by "that's blue" regardless of how dark or pale it is, so
+     * very dark pixels are classified as black and very washed-out ones as white/black by
+     * brightness alone, and every other pixel is classified by which hue sector it falls into.
+     */
     private static int nearestBaseColorIndex(int argb) {
         if ((argb >>> 24) < 255) return GRAY_INDEX;
 
@@ -329,20 +351,31 @@ public class GuessResultBL implements java.io.Serializable {
         int g = (argb >> 8) & 0xFF;
         int b = argb & 0xFF;
 
-        int best = 0;
-        int bestDist = Integer.MAX_VALUE;
-        for (int i = 0; i < GRAY_INDEX; i++) {
-            Color base = PALETTE[i];
-            int dr = r - base.getRed();
-            int dg = g - base.getGreen();
-            int db = b - base.getBlue();
-            int dist = dr * dr + dg * dg + db * db;
-            if (dist < bestDist) {
-                bestDist = dist;
-                best = i;
-            }
+        int max = Math.max(r, Math.max(g, b));
+        int min = Math.min(r, Math.min(g, b));
+        double value = max / 255.0;
+        double saturation = max == 0 ? 0 : (max - min) / (double) max;
+
+        if (value < 0.2) return BLACK_INDEX;
+        if (saturation < 0.15) return value >= 0.5 ? WHITE_INDEX : BLACK_INDEX;
+
+        int delta = max - min;
+        double hue;
+        if (max == r) {
+            hue = 60.0 * (((g - b) / (double) delta) % 6);
+        } else if (max == g) {
+            hue = 60.0 * (((b - r) / (double) delta) + 2);
+        } else {
+            hue = 60.0 * (((r - g) / (double) delta) + 4);
         }
-        return best;
+        if (hue < 0) hue += 360;
+
+        if (hue < 15 || hue >= 345) return RED_INDEX;
+        if (hue < 45) return ORANGE_INDEX;
+        if (hue < 65) return YELLOW_INDEX;
+        if (hue < 170) return GREEN_INDEX;
+        if (hue < 260) return BLUE_INDEX;
+        return PURPLE_INDEX;
     }
 
     // ----------------- Comparison -----------------
