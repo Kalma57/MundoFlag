@@ -1,0 +1,31 @@
+{
+  "appId": "com.mundoflag.app",
+  "appName": "MundoFlag",
+  "webDir": "www",
+  "server": {
+    "url": "https://mundoflag.com",
+    "errorPath": "offline.html",
+    "androidScheme": "https"
+  },
+  "backgroundColor": "#E8F9F4",
+  "android": {
+    "allowMixedContent": false
+  },
+  "ios": {
+    "contentInset": "never",
+    "scrollEnabled": true
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 1200,
+      "launchAutoHide": true,
+      "backgroundColor": "#E8F9F4",
+      "showSpinner": false
+    },
+    "SystemBars": {
+      "insetsHandling": "native",
+      "initialViewportFitValueHint": "cover",
+      "style": "LIGHT"
+    }
+  }
+}

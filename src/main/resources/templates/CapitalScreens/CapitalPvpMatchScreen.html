@@ -2,7 +2,7 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="description" content="Free geography games: guess countries by their flags, find them on a 3D globe, match capital cities, and take a new daily quiz. Play solo, against the computer, or 1v1 with a friend.">
     <link rel="icon" href="/favicon.svg" type="image/svg+xml">
     <link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png">
@@ -17,9 +17,7 @@
     <meta name="twitter:card" content="summary_large_image">
     <title th:text="${modeLabel} + ' - 1v1 vs Friend'">Capital Cities - 1v1 vs Friend</title>
 
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/fonts.css?v=1">
 
     <style>
         :root {
@@ -154,7 +152,7 @@
         .rules-panel p { margin: 10px 0; color: #333; }
         .close-rules { position: absolute; top: 15px; right: 25px; font-size: 32px; cursor: pointer; color: var(--pink-dark); }
     </style>
-    <link rel="stylesheet" href="/css/mobile.css?v=3">
+    <link rel="stylesheet" href="/css/mobile.css?v=4">
 </head>
 
 <body th:attr="data-mode=${mode},data-room-code=${roomCode},data-player-token=${playerToken}">
@@ -578,8 +576,9 @@
     startPolling();
 </script>
 
-<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+<script src="/js/confetti.browser.js?v=1"></script>
 
-<script src="/js/bg-music.js?v=1"></script>
+<script src="/js/bg-music.js?v=2"></script>
+<script src="/js/mobile.js?v=1"></script>
 </body>
 </html>

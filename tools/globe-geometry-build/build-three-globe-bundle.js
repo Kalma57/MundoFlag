@@ -78,6 +78,10 @@ const injected = `
 ${hashFnSource}
 
 // ---- injected by tools/globe-geometry-build/build-three-globe-bundle.js ----
+// The FULL three namespace. (Don't use three-globe's own internal aliases like THREE$h: those
+// are "window.THREE or a small hand-picked subset" objects that lack BufferGeometry, which made
+// every precomputed lookup throw "BufferGeometry is not a constructor".)
+import * as __THREE_FULL from 'three';
 let __precomputedPolygonManifest = null;
 let __precomputedPolygonPositions = null; // Float32Array view over the fetched .bin
 let __precomputedPolygonIndices = null;   // Uint16Array view over the fetched .bin
@@ -96,11 +100,11 @@ function __getPolygonGeometry(coords, radius, capCurvatureResolution) {
     const key = hashCoords(JSON.stringify(coords));
     const entry = __precomputedPolygonManifest[key];
     if (entry) {
-      const geom = new THREE$h.BufferGeometry();
-      geom.setAttribute('position', new THREE$h.BufferAttribute(
+      const geom = new __THREE_FULL.BufferGeometry();
+      geom.setAttribute('position', new __THREE_FULL.BufferAttribute(
         __precomputedPolygonPositions.subarray(entry.posOffset, entry.posOffset + entry.posCount), 3
       ));
-      geom.setIndex(new THREE$h.BufferAttribute(
+      geom.setIndex(new __THREE_FULL.BufferAttribute(
         __precomputedPolygonIndices.subarray(entry.idxOffset, entry.idxOffset + entry.idxCount), 1
       ));
       entry.groups.forEach(g => geom.addGroup(g[0], g[1], g[2]));
@@ -121,14 +125,6 @@ function __getPolygonGeometry(coords, radius, capCurvatureResolution) {
 
 importLines.splice(lastImportLine + 1, 0, injected);
 src = importLines.join('\n');
-
-// Sanity-check that THREE$h (the namespace alias used inside polygons.js in
-// this exact three-globe version) actually exists in this bundle and has
-// BufferGeometry/BufferAttribute — if this ever fails after a three-globe
-// version bump, the alias name needs to be re-derived from the new dist file.
-if (!/var THREE\$h\s*=/.test(src) && !/THREE\$h,/.test(src) && !src.includes('THREE$h')) {
-  throw new Error('THREE$h alias not found in three-globe.mjs — three-globe internals changed, re-derive the correct THREE namespace alias for the polygon layer before patching.');
-}
 
 fs.writeFileSync(PATCHED, src);
 console.log('Wrote patched source to', PATCHED);
