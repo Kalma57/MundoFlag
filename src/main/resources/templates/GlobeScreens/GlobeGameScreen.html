@@ -837,7 +837,6 @@
   import { initGlobe, colorCountry, focusOnCountry } from '/js/globe.js?v=2056';
 
   let guessesArray   = [];
-  let validCountries = [];
   let hintsUsedCount = 0;
 
   initGlobe().finally(() => {
@@ -864,7 +863,6 @@
     try {
       const response  = await fetch("/Globe/countries?gameId=" + encodeURIComponent(GAME_ID));
       const countries = await response.json();
-      validCountries  = countries;
       const list      = document.getElementById("countriesList");
       countries.forEach(country => {
         const option = document.createElement("option");
@@ -1008,13 +1006,6 @@
 
     if (!country) { alert("Please choose a country."); return; }
 
-    const isValid = validCountries.some(c => c.toLowerCase() === country.toLowerCase());
-    if (!isValid) {
-      alert("Please select a valid country from the list.");
-      input.value = "";
-      return;
-    }
-
     try {
       const response = await fetch("/Globe/guess/ajax", {
         method:  "POST",
@@ -1025,6 +1016,13 @@
       });
       const result = await response.json();
       console.log("Server Response:", result);
+
+      /* The server checks the name (so aliases like "Ivory Coast" work) and says if it's unknown */
+      if (result && result.error) {
+        alert(result.error);
+        input.value = "";
+        return;
+      }
 
       if (result.colorHex && result.guessedCountry) {
         const alreadyGuessed = guessesArray.find(g => g.name === result.guessedCountry.name);
