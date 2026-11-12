@@ -60,6 +60,30 @@ public class CapitalGlobeController {
         return "CapitalScreens/CapitalGlobeScreen";
     }
 
+    /**
+     * "Play Again" without reloading the page: starts a fresh game and returns its new gameId
+     * plus the capital to show, so the browser keeps the globe it already built instead of
+     * re-downloading and rebuilding it. The finished game's ViewModel is dropped from the session.
+     */
+    @PostMapping("/new/ajax")
+    @ResponseBody
+    public Map<String, Object> newGameAjax(
+            @RequestParam(name = "oldGameId", required = false) String oldGameId,
+            HttpSession session) {
+
+        if (oldGameId != null) session.removeAttribute("capitalGlobeVM_" + oldGameId);
+
+        String gameId = UUID.randomUUID().toString();
+        CapitalGlobeViewModel viewModel = new CapitalGlobeViewModel(countryController);
+        viewModel.startNewGame();
+        session.setAttribute("capitalGlobeVM_" + gameId, viewModel);
+
+        Map<String, Object> data = new HashMap<>();
+        data.put("gameId", gameId);
+        data.put("capital", viewModel.getEngine().getTargetCountry().getCapital());
+        return data;
+    }
+
     @RequestMapping(value = "/guess/ajax", method = {RequestMethod.POST, RequestMethod.GET})
     @ResponseBody
     public GuessResultGlobeBL guessAjax(

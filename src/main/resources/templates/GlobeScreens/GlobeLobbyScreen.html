@@ -315,6 +315,15 @@
 
   </style>
     <link rel="stylesheet" href="/css/mobile.css?v=3">
+  <!-- Warm the browser cache with the globe's heavy files while the player is
+       still picking a mode, so the game screen's globe builds sooner. -->
+  <link rel="prefetch" href="/assets/countries-50m.json">
+  <link rel="prefetch" href="/assets/polygon-geometry-manifest.json">
+  <link rel="prefetch" href="/assets/polygon-geometry.bin">
+  <link rel="prefetch" href="/assets/earth-day.jpg">
+  <link rel="prefetch" href="/three/three.module.js?v=2">
+  <link rel="prefetch" href="/js/globe.js?v=2057">
+  <link rel="prefetch" href="https://esm.sh/three-globe@2.41.11?external=three,three-conic-polygon-geometry&bundle" crossorigin="anonymous">
 </head>
 
 <body>
