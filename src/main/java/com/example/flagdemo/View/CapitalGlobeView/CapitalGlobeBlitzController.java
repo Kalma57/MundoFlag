@@ -71,6 +71,30 @@ public class CapitalGlobeBlitzController {
         return "CapitalScreens/CapitalGlobeBlitzScreen";
     }
 
+    /**
+     * "Play Again" without reloading the page: starts a new Blitz with the same settings and
+     * returns only its matchId, so the browser keeps the globe it already built instead of
+     * re-downloading and rebuilding it. The finished match is dropped from the session.
+     */
+    @PostMapping("/restart/ajax")
+    @ResponseBody
+    public Map<String, Object> restartAjax(
+            @RequestParam(name = "aiLevel", defaultValue = "MEDIUM") AiSkillLevel aiLevel,
+            @RequestParam(name = "durationSeconds", defaultValue = "60") int durationSeconds,
+            @RequestParam(name = "oldMatchId", required = false) String oldMatchId,
+            HttpSession session) {
+
+        if (oldMatchId != null) session.removeAttribute("capitalGlobeBlitzVM_" + oldMatchId);
+
+        durationSeconds = normalizeDuration(durationSeconds);
+        String matchId = UUID.randomUUID().toString();
+        CapitalGlobeBlitzViewModel viewModel = new CapitalGlobeBlitzViewModel(countryController, aiLevel, durationSeconds);
+        viewModel.startMatch();
+        session.setAttribute("capitalGlobeBlitzVM_" + matchId, viewModel);
+
+        return Map.of("matchId", matchId);
+    }
+
     private int normalizeDuration(int durationSeconds) {
         return VALID_DURATIONS_SECONDS.contains(durationSeconds) ? durationSeconds : 60;
     }
