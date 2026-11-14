@@ -493,3 +493,11 @@ export function focusOnCountry(lat, lon) {
     camera.lookAt(0, 0, 0);
     if (controls) controls.update();
 }
+
+/** Puts the camera back at its starting distance/angle - used when a new game starts in place. */
+export function resetCamera() {
+    if (!camera) return;
+    camera.position.set(0, 0, 200);
+    camera.lookAt(0, 0, 0);
+    if (controls) controls.update();
+}
