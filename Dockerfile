@@ -10,6 +10,8 @@ RUN addgroup -S app && adduser -S app -G app
 WORKDIR /app
 # Copy the jar file from the build stage
 COPY --from=build --chown=app:app /target/*.jar app.jar
+# Where the anonymous stats counters are saved (a Docker volume is mounted here on the server)
+RUN mkdir -p /app/stats && chown app:app /app/stats
 USER app
 
 # Expose the port Spring Boot runs on

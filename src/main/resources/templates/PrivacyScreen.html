@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="description" content="Free geography games: guess countries by their flags, find them on a 3D globe, match capital cities, and take a new daily quiz. Play solo, against the computer, or 1v1 with a friend.">
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+    <link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    <!-- "Add to Home Screen" opens the game full screen, like the app -->
+    <link rel="manifest" href="/manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="MundoFlag">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="theme-color" content="#E8F9F4">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="MundoFlag">
+    <meta property="og:title" content="MundoFlag - geography games">
+    <meta property="og:description" content="Guess countries by their flags, find them on a 3D globe, match capital cities, and take a new daily quiz. Solo, vs the computer, or 1v1 with a friend.">
+    <meta property="og:image" th:if="${siteUrl}" th:content="${siteUrl} + '/img/og-image.png'">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta name="twitter:card" content="summary_large_image">
+    <title>MundoFlag - Privacy Policy</title>
+
+    <link rel="stylesheet" href="/css/fonts.css?v=1">
+
+    <style>
+        *{
+            margin:0;
+            padding:0;
+            box-sizing:border-box;
+            font-family:'Nunito', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        h1, h2{
+            font-family:'Baloo 2', 'Nunito', sans-serif;
+        }
+
+        /* Same animated gradient background as the home page */
+        body{
+            min-height:100vh;
+            padding:40px 16px 80px;
+            color:#24423d;
+            background: linear-gradient(-45deg,#e9f8f5,#f9f9f9,#dff6f1,#e6fffb);
+            background-size:400% 400%;
+            animation: gradientMove 12s ease infinite;
+        }
+
+        @keyframes gradientMove{
+            0%{ background-position:0% 50%; }
+            50%{ background-position:100% 50%; }
+            100%{ background-position:0% 50%; }
+        }
+
+        .back-link{
+            display:inline-block;
+            margin-bottom:24px;
+            padding:8px 16px;
+            border-radius:999px;
+            background:#fff;
+            color:#1a9e8a;
+            font-weight:700;
+            text-decoration:none;
+            box-shadow:0 2px 10px rgba(0,0,0,0.08);
+        }
+
+        .page{
+            max-width:760px;
+            margin:0 auto;
+        }
+
+        h1{
+            font-size:44px;
+            color:#1a9e8a;
+            margin-bottom:6px;
+        }
+
+        .intro{
+            margin-bottom:28px;
+            color:#55706b;
+        }
+
+        section{
+            background:#fff;
+            border-radius:18px;
+            padding:22px 24px;
+            margin-bottom:18px;
+            box-shadow:0 4px 18px rgba(0,0,0,0.06);
+        }
+
+        h2{
+            font-size:24px;
+            margin-bottom:12px;
+        }
+
+        ul{
+            list-style:none;
+        }
+
+        li{
+            padding:10px 0;
+            border-top:1px solid #eef3f2;
+            line-height:1.5;
+        }
+
+        li:first-child{
+            border-top:none;
+            padding-top:0;
+        }
+
+        .work{
+            font-weight:700;
+        }
+
+        .license{
+            display:inline-block;
+            margin-left:6px;
+            padding:1px 8px;
+            border-radius:999px;
+            background:#e6f7f4;
+            color:#13806f;
+            font-size:13px;
+            font-weight:700;
+        }
+
+        .note{
+            display:block;
+            color:#6b827e;
+            font-size:14px;
+        }
+
+        a{
+            color:#13806f;
+        }
+    </style>
+    <link rel="stylesheet" href="/css/mobile.css?v=7">
+</head>
+<body>
+<div class="page">
+    <a class="back-link" href="/">← Home</a>
+    <h1>Privacy Policy</h1>
+    <p class="intro">MundoFlag website and app · last updated November 2026</p>
+
+    <section>
+        <h2>The short version</h2>
+        <p>MundoFlag doesn't collect personal information. There are no accounts, no ads and no tracking, and nothing
+            about you is sold or shared with anyone. We only keep anonymous counts (how many visits and games), explained below.</p>
+    </section>
+
+    <section>
+        <h2>What the game stores, and why</h2>
+        <ul>
+            <li>
+                <span class="work">A game session cookie</span>
+                <span class="note">Keeps your current game (your guesses, score and round) on the server while you play.
+                    It holds a random ID, not anything about you, and expires when you stop playing.</span>
+            </li>
+            <li>
+                <span class="work">A "played today" cookie</span>
+                <span class="note">Remembers that you already took today's Daily Quiz. It only contains today's date and expires the next day.</span>
+            </li>
+            <li>
+                <span class="work">Your first and last visit day, on your device</span>
+                <span class="note">Lets us count how many players come back. Once a day the game tells our server only
+                    "a visit happened", whether it was on the website or the app, and those two dates - no name, no ID,
+                    nothing that could tell you apart from anyone else.</span>
+            </li>
+            <li>
+                <span class="work">Your Daily Quiz result, on your device</span>
+                <span class="note">So you can still share today's result later. It stays on your device and is replaced the next day.</span>
+            </li>
+            <li>
+                <span class="work">Music settings on your device</span>
+                <span class="note">Whether the music is on, and where the song was, are saved in your browser / app only - they are never sent to us.</span>
+            </li>
+        </ul>
+    </section>
+
+    <section>
+        <h2>Anonymous counts</h2>
+        <p>Our server keeps daily totals only: how many visits (website / app), how many of them were returning
+            players, how many games of each kind were started, and how many Daily Quiz results were shared.
+            These are plain numbers - they can't be linked to you or to your device.</p>
+    </section>
+
+    <section>
+        <h2>Playing with a friend</h2>
+        <p>A 1v1 room is identified by a short random code. Rooms hold only the game itself (flags, guesses, scores),
+            not names or contact details, and are deleted from the server's memory after the match.</p>
+    </section>
+
+    <section>
+        <h2>Technical information</h2>
+        <p>Like any website, our server sees your device's IP address while it answers your requests. We don't store it in
+            logs or use it to identify you. All connections are encrypted (HTTPS). The game's fonts, images and code are served by
+            our own server - no third-party services are contacted while you play.</p>
+    </section>
+
+    <section>
+        <h2>Children</h2>
+        <p>MundoFlag is a geography game suitable for all ages. Because it collects no personal information,
+            it doesn't collect any from children either.</p>
+    </section>
+
+    <section>
+        <h2>Changes and contact</h2>
+        <p>If this policy changes, the new version will be posted on this page.
+            <span th:if="${contactEmail}">Questions? Write to <a th:href="'mailto:' + ${contactEmail}" th:text="${contactEmail}">email</a>.</span></p>
+    </section>
+</div>
+
+<script src="/js/bg-music.js?v=3"></script>
+<script src="/js/mobile.js?v=2"></script>
+</body>
+</html>

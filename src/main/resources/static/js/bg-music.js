@@ -15,7 +15,9 @@
     let muted = read(localStorage, MUTED_KEY) === '1';
 
     const audio = new Audio();
-    audio.preload = 'auto';
+    // Nothing is downloaded until the music is actually about to play (the first tap on a page),
+    // so the 2 MB song never competes with the game itself while a page is loading on a phone.
+    audio.preload = 'none';
     audio.volume = VOLUME;
 
     function load(index, startAt) {
@@ -27,11 +29,13 @@
     }
 
     function save() {
-        write(sessionStorage, STATE_KEY, JSON.stringify({ track: state.track, time: audio.currentTime || 0 }));
+        const time = audio.src ? (audio.currentTime || 0) : state.time;
+        write(sessionStorage, STATE_KEY, JSON.stringify({ track: state.track, time: time }));
     }
 
     function tryPlay() {
         if (muted) return;
+        if (!audio.src) load(state.track, state.time);
         audio.play().catch(() => { /* blocked until the first click/key - see unlock below */ });
     }
 
@@ -47,6 +51,13 @@
 
     // Save the position before leaving the page (pagehide also fires on mobile / bfcache).
     window.addEventListener('pagehide', save);
+
+    // Phone / app: stop the music while the app is in the background (home button, another app,
+    // screen locked) and pick it up again on return - otherwise it keeps playing over everything.
+    document.addEventListener('visibilitychange', () => {
+        if (document.hidden) { save(); audio.pause(); }
+        else tryPlay();
+    });
     setInterval(save, 2000);
 
     // Small mute/unmute button in the corner.
@@ -54,7 +65,9 @@
         const btn = document.createElement('button');
         btn.type = 'button';
         btn.id = 'bg-music-toggle';
-        btn.style.cssText = 'position:fixed;bottom:16px;left:16px;z-index:9999;width:44px;height:44px;' +
+        // env(safe-area-inset-*) keeps it clear of the iPhone home bar / rounded corners (0 elsewhere)
+        btn.style.cssText = 'position:fixed;bottom:calc(16px + env(safe-area-inset-bottom, 0px));' +
+            'left:calc(16px + env(safe-area-inset-left, 0px));z-index:9999;width:44px;height:44px;' +
             'border-radius:50%;border:none;cursor:pointer;font-size:20px;line-height:44px;padding:0;' +
             'background:rgba(0,0,0,0.55);color:#fff;box-shadow:0 2px 8px rgba(0,0,0,0.3);';
         const render = () => {
@@ -72,7 +85,8 @@
         document.body.appendChild(btn);
     }
 
-    load(state.track, state.time);
-    tryPlay(); // works right away if the browser already allows sound on this site
+    // Music already playing on the previous page of this tab: carry on right away (the song is
+    // already in the browser's cache by then). A first visit waits for the first tap instead.
+    if (state.time > 0) tryPlay();
     if (document.body) buildButton(); else document.addEventListener('DOMContentLoaded', buildButton);
 })();

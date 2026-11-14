@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="robots" content="noindex, nofollow">
+    <title>MundoFlag - Stats</title>
+    <link rel="stylesheet" href="/css/fonts.css?v=1">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Nunito', 'Segoe UI', sans-serif; background: #f2f7f6; color: #24423d;
+               padding: calc(20px + env(safe-area-inset-top)) 14px 40px; }
+        .page { max-width: 980px; margin: 0 auto; }
+        h1 { font-family: 'Baloo 2', sans-serif; color: #1a9e8a; font-size: 34px; }
+        .sub { color: #6b827e; margin-bottom: 18px; }
+        section { background: #fff; border-radius: 16px; padding: 18px; margin-bottom: 16px; box-shadow: 0 3px 14px rgba(0,0,0,.06); }
+        h2 { font-family: 'Baloo 2', sans-serif; font-size: 22px; margin-bottom: 4px; }
+        .hint { color: #6b827e; font-size: 14px; margin-bottom: 12px; }
+        .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; }
+        .tile { background: #e9f8f5; border-radius: 12px; padding: 12px; }
+        .tile b { display: block; font-size: 28px; color: #13806f; }
+        .tile span { font-size: 14px; color: #55706b; }
+        .scroll { overflow-x: auto; }
+        table { border-collapse: collapse; width: 100%; font-size: 15px; white-space: nowrap; }
+        th, td { padding: 7px 10px; text-align: right; border-bottom: 1px solid #eef3f2; }
+        th:first-child, td:first-child { text-align: left; }
+        th { color: #55706b; font-weight: 700; font-size: 13px; }
+        tr.zero td { color: #b5c4c1; }
+    </style>
+</head>
+<body>
+<div class="page">
+    <h1>MundoFlag stats</h1>
+    <p class="sub">Anonymous counts, days in UTC · today is <span th:text="${today}">2026-01-01</span>.
+        App <b>downloads</b> are in Google Play Console → Statistics.</p>
+
+    <section>
+        <h2>Players so far</h2>
+        <p class="hint">Different devices that have opened MundoFlag (first visits), by where they play.</p>
+        <div class="tiles">
+            <div class="tile"><b th:text="${peopleTotal}">0</b><span>all together</span></div>
+            <div class="tile"><b th:text="${people['web']}">0</b><span>website</span></div>
+            <div class="tile"><b th:text="${people['app']}">0</b><span>Android app</span></div>
+            <div class="tile"><b th:text="${people['home']}">0</b><span>home-screen (iPhone etc.)</span></div>
+            <div class="tile"><b th:text="${shares}">0</b><span>Daily Quiz results shared</span></div>
+        </div>
+    </section>
+
+    <section>
+        <h2>Last 30 days</h2>
+        <p class="hint">Visitors = different devices that day. Returning = had visited on an earlier day.
+            Back from yesterday = also visited the day before.</p>
+        <div class="scroll">
+            <table>
+                <tr><th>Day</th><th>Website</th><th>App</th><th>Home-screen</th><th>New</th><th>Returning</th>
+                    <th>Back from yesterday</th><th>Games</th><th>Daily finished</th><th>Shares</th></tr>
+                <tr th:each="r : ${rows}" th:classappend="${r['web'] + r['app'] + r['home'] == 0} ? 'zero'">
+                    <td th:text="${r['day']}"></td><td th:text="${r['web']}"></td><td th:text="${r['app']}"></td>
+                    <td th:text="${r['home']}"></td><td th:text="${r['new']}"></td><td th:text="${r['returning']}"></td>
+                    <td th:text="${r['back1']}"></td><td th:text="${r['games']}"></td>
+                    <td th:text="${r['dailyDone']}"></td><td th:text="${r['shares']}"></td>
+                </tr>
+            </table>
+        </div>
+    </section>
+
+    <section>
+        <h2>Do they come back?</h2>
+        <p class="hint">Of the people who first came on a given day, how many returned 1 day and 7 days later.
+            This is the number that says whether MundoFlag is a habit or just a one-time look.</p>
+        <div class="scroll">
+            <table>
+                <tr><th>First visit</th><th>New players</th><th>Back next day</th><th>Back after a week</th></tr>
+                <tr th:each="r : ${retention}">
+                    <td th:text="${r['day']}"></td><td th:text="${r['new']}"></td>
+                    <td th:text="${r['d1']}"></td><td th:text="${r['d7']}"></td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(retention)}"><td colspan="4">Nothing yet - fills in from the day after the first visitors.</td></tr>
+            </table>
+        </div>
+    </section>
+
+    <section>
+        <h2>Games played (all time)</h2>
+        <div class="scroll">
+            <table>
+                <tr><th>Game</th><th>Started</th></tr>
+                <tr th:each="g : ${games}"><td th:text="${g.key}"></td><td th:text="${g.value}"></td></tr>
+                <tr th:if="${#maps.isEmpty(games)}"><td colspan="2">No games yet.</td></tr>
+            </table>
+        </div>
+    </section>
+</div>
+</body>
+</html>

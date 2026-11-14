@@ -2,11 +2,18 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="description" content="Free geography games: guess countries by their flags, find them on a 3D globe, match capital cities, and take a new daily quiz. Play solo, against the computer, or 1v1 with a friend.">
     <link rel="icon" href="/favicon.svg" type="image/svg+xml">
     <link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png">
     <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    <!-- "Add to Home Screen" opens the game full screen, like the app -->
+    <link rel="manifest" href="/manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="MundoFlag">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="theme-color" content="#E8F9F4">
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="MundoFlag">
     <meta property="og:title" content="MundoFlag - geography games">
@@ -17,9 +24,7 @@
     <meta name="twitter:card" content="summary_large_image">
     <title th:text="${modeLabel} + ' - Blitz vs Friend'">Capital Cities - Blitz vs Friend</title>
 
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/fonts.css?v=1">
 
     <style>
         :root {
@@ -79,7 +84,7 @@
             padding: clamp(12px, 2.2vh, 26px) clamp(16px, 2.4vw, 32px); background: rgba(255,255,255,0.85); backdrop-filter: blur(10px);
             border-radius: 20px; box-shadow: var(--shadow-md); flex-shrink: 0;
         }
-        .prompt-flag { height: clamp(80px, 18vh, 200px); width: auto; max-width: 58vw; border-radius: 12px; box-shadow: var(--shadow-md); border: 3px solid rgba(236,64,122,0.25); }
+        .prompt-flag { height: clamp(80px, 18vh, 200px); width: auto; aspect-ratio: 4 / 3; object-fit: cover; max-width: 58vw; border-radius: 12px; box-shadow: var(--shadow-md); border: 3px solid rgba(236,64,122,0.25); }
         .prompt-text { font-size: clamp(22px, 3.8vh, 38px); font-weight: 800; color: #2c2c2c; text-align: center; }
         .prompt-label { font-size: clamp(11px, 1.4vh, 14px); color: #888; text-transform: uppercase; letter-spacing: 1.5px; font-weight: 700; }
 
@@ -154,7 +159,7 @@
         .rules-panel p { margin: 10px 0; color: #333; }
         .close-rules { position: absolute; top: 15px; right: 25px; font-size: 32px; cursor: pointer; color: var(--pink-dark); }
     </style>
-    <link rel="stylesheet" href="/css/mobile.css?v=3">
+    <link rel="stylesheet" href="/css/mobile.css?v=7">
 </head>
 
 <body th:attr="data-mode=${mode},data-room-code=${roomCode},data-player-token=${playerToken}">
@@ -248,7 +253,7 @@
     <p>Either of you can hit <strong>PAUSE</strong> to freeze the match for up to 60 seconds - each player gets one pause for the whole match, and it auto-resumes if nobody hits resume first.</p>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+<script src="/js/confetti.browser.js?v=1"></script>
 
 <script th:inline="none">
     const MODE = document.body.getAttribute('data-mode');
@@ -370,7 +375,7 @@
     }
 
     function applyState(data) {
-        if (!data || data.humanScore === undefined) return;
+        if (!data || data.humanScore === undefined) { window.MundoGameGone(data); return; }
 
         humanScoreText.textContent = data.humanScore;
         aiScoreText.textContent = data.aiScore;
@@ -555,6 +560,8 @@
     startPolling();
 </script>
 
-<script src="/js/bg-music.js?v=1"></script>
+<script src="/js/game-expired.js?v=1"></script>
+<script src="/js/bg-music.js?v=3"></script>
+<script src="/js/mobile.js?v=2"></script>
 </body>
 </html>

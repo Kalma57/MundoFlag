@@ -2,11 +2,18 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="description" content="Free geography games: guess countries by their flags, find them on a 3D globe, match capital cities, and take a new daily quiz. Play solo, against the computer, or 1v1 with a friend.">
     <link rel="icon" href="/favicon.svg" type="image/svg+xml">
     <link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png">
     <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    <!-- "Add to Home Screen" opens the game full screen, like the app -->
+    <link rel="manifest" href="/manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="MundoFlag">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="theme-color" content="#E8F9F4">
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="MundoFlag">
     <meta property="og:title" content="MundoFlag - geography games">
@@ -17,9 +24,7 @@
     <meta name="twitter:card" content="summary_large_image">
     <title>Capital Cities - Blitz</title>
 
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/fonts.css?v=1">
 
     <style>
         :root {
@@ -231,6 +236,8 @@
         .prompt-flag {
             height: clamp(80px, 18vh, 200px);
             width: auto;
+            aspect-ratio: 4 / 3;     /* flag images are squares with the flag in a 4:3 band */
+            object-fit: cover;
             max-width: 58vw;
             border-radius: 12px;
             box-shadow: var(--shadow-md);
@@ -495,7 +502,7 @@
             color: #ab47bc;
         }
     </style>
-    <link rel="stylesheet" href="/css/mobile.css?v=3">
+    <link rel="stylesheet" href="/css/mobile.css?v=7">
 </head>
 
 <body th:attr="data-match-id=${matchId}, data-mode=${mode}">
@@ -692,7 +699,7 @@
     }
 
     function applyState(data) {
-        if (!data || data.humanScore === undefined) return;
+        if (!data || data.humanScore === undefined) { window.MundoGameGone(data); return; }
 
         humanScoreText.textContent = data.humanScore;
         aiScoreText.textContent = data.aiScore;
@@ -754,7 +761,7 @@
             row.innerHTML =
                 '<span class="recap-order">' + q.order + '</span>' +
                 flagImg +
-                '<span class="recap-prompt">' + (q.promptText || '') + '</span>' +
+                '<span class="recap-prompt">' + (q.promptText || '') + (q.correctAnswerText ? ' → ' + q.correctAnswerText : '') + '</span>' +
                 humanCell + aiCell;
             matchRecap.appendChild(row);
         });
@@ -878,6 +885,8 @@
     startPolling();
 </script>
 
-<script src="/js/bg-music.js?v=1"></script>
+<script src="/js/game-expired.js?v=1"></script>
+<script src="/js/bg-music.js?v=3"></script>
+<script src="/js/mobile.js?v=2"></script>
 </body>
 </html>

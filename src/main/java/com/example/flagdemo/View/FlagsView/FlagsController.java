@@ -59,7 +59,6 @@ public class FlagsController {
     @GetMapping("/start")
     public String startGame(
             @RequestParam(name = "difficulty", defaultValue = "HARD") DifficultyLevel difficulty,
-            Model model,
             HttpSession session) throws SQLException {
 
         // Generate a unique ID for this specific game window
@@ -72,39 +71,50 @@ public class FlagsController {
         // Store under a unique key — prevents windows from overwriting each other
         session.setAttribute("flagsVM_" + gameId, viewModel);
 
-        // Pass gameId to Thymeleaf so it can embed it in the forms
-        model.addAttribute("gameId", gameId);
-        model.addAttribute("viewModel", viewModel);
-        model.addAttribute("difficulty", difficulty);
+        // Land on the game's own address, so a refresh (or Safari reloading the tab after it was
+        // in the background) shows this same game with its guesses instead of starting over.
+        return "redirect:/Flags/play?gameId=" + gameId + "&difficulty=" + difficulty.name();
+    }
 
+    /** The game page for one game, safe to refresh: everything is rebuilt from the session. */
+    @GetMapping("/play")
+    public String play(
+            @RequestParam("gameId") String gameId,
+            @RequestParam(name = "difficulty", defaultValue = "HARD") DifficultyLevel difficulty,
+            Model model,
+            HttpSession session) {
+
+        FlagsViewModel viewModel = (FlagsViewModel) session.getAttribute("flagsVM_" + gameId);
+        // Expired (or never existed): start a fresh game of the same difficulty instead of an error
+        if (viewModel == null) return "redirect:/Flags/start?difficulty=" + difficulty.name();
+        if (viewModel.isCorrect() || isOver(session, gameId)) return "redirect:/Flags/end?gameId=" + gameId;
+
+        model.addAttribute("guesses",    buildGuessList(viewModel));
+        model.addAttribute("viewModel",  viewModel);
+        model.addAttribute("difficulty", viewModel.getDifficulty());
+        model.addAttribute("gameId",     gameId);
         return "FlagsScreens/FlagsGameScreen";
     }
 
+    /** Plain form fallback (no JavaScript): one guess, then back to the game's own GET address. */
     @PostMapping("/guess")
     public String guess(
             @RequestParam("countryName") String countryName,
             @RequestParam("gameId") String gameId,        // received from hidden form field
-            Model model,
-            HttpSession session) throws SQLException, IOException {
+            HttpSession session) throws SQLException {
 
-        // Retrieve the ViewModel that belongs to this specific game window
-        FlagsViewModel viewModel =
-                (FlagsViewModel) session.getAttribute("flagsVM_" + gameId);
+        FlagsViewModel viewModel = (FlagsViewModel) session.getAttribute("flagsVM_" + gameId);
+        if (viewModel == null) return "redirect:/Flags";
+        if (isOver(session, gameId)) return "redirect:/Flags/end?gameId=" + gameId;
 
-        viewModel.Guess(countryName);
-
-        if (viewModel.isCorrect()) {
-            return endScreen(viewModel, true, gameId, model, session);
+        if (countryController.getCountryByName(countryName.trim()) != null) {
+            viewModel.Guess(countryName.trim());
         }
-
-        model.addAttribute("guesses",   buildGuessList(viewModel));
-        model.addAttribute("viewModel", viewModel);
-        model.addAttribute("difficulty", viewModel.getDifficulty());
-
-        // Pass gameId back so the next form submission also carries it
-        model.addAttribute("gameId", gameId);
-
-        return "FlagsScreens/FlagsGameScreen";
+        if (viewModel.isCorrect()) {
+            markOver(session, gameId);
+            return "redirect:/Flags/end?gameId=" + gameId;
+        }
+        return "redirect:/Flags/play?gameId=" + gameId + "&difficulty=" + viewModel.getDifficulty().name();
     }
 
     /**
@@ -131,7 +141,7 @@ public class FlagsController {
             data.put("expired", true);
             return data;
         }
-        if (viewModel.isCorrect()) {
+        if (viewModel.isCorrect() || isOver(session, gameId)) {
             data.put("ok", true);
             data.put("finished", true);
             return data;
@@ -156,51 +166,84 @@ public class FlagsController {
         return data;
     }
 
-    /** Shows the end screen for a game whose last guess was already made through /guess/ajax. */
+    /** Called once the last guess (made through /guess/ajax) was correct. */
     @PostMapping("/finish")
     public String finish(
             @RequestParam("gameId") String gameId,
-            Model model,
-            HttpSession session) throws SQLException, IOException {
+            HttpSession session) {
 
         FlagsViewModel viewModel = (FlagsViewModel) session.getAttribute("flagsVM_" + gameId);
         if (viewModel == null) return "redirect:/Flags";
-        return endScreen(viewModel, viewModel.isCorrect(), gameId, model, session);
+        if (!viewModel.isCorrect()) {
+            return "redirect:/Flags/play?gameId=" + gameId + "&difficulty=" + viewModel.getDifficulty().name();
+        }
+        markOver(session, gameId);
+        return "redirect:/Flags/end?gameId=" + gameId;
     }
 
     @PostMapping("/giveup")
     public String giveUp(
             @RequestParam("gameId") String gameId,        // received from hidden form field
-            Model model,
-            HttpSession session) throws SQLException, IOException {
+            HttpSession session) {
 
-        // Retrieve the ViewModel that belongs to this specific game window
-        FlagsViewModel viewModel =
-                (FlagsViewModel) session.getAttribute("flagsVM_" + gameId);
-
-        return endScreen(viewModel, false, gameId, model, session);
+        FlagsViewModel viewModel = (FlagsViewModel) session.getAttribute("flagsVM_" + gameId);
+        if (viewModel == null) return "redirect:/Flags";
+        markOver(session, gameId);
+        return "redirect:/Flags/end?gameId=" + gameId;
     }
 
-    /** The end-of-game page: the answer, the attempt count and the whole guess history. */
-    private String endScreen(FlagsViewModel viewModel, boolean success, String gameId,
-                             Model model, HttpSession session) throws IOException {
+    /**
+     * The end-of-game page (the answer, the attempt count and the whole guess history) at its own
+     * GET address, so refreshing it, going Back to it, or Safari reloading the tab shows it again
+     * instead of re-sending a form. Only reachable once the game is really over (won or given
+     * up), so the answer can't be peeked at mid-game.
+     */
+    @GetMapping("/end")
+    public String end(
+            @RequestParam("gameId") String gameId,
+            Model model,
+            HttpSession session) throws IOException {
+
+        FlagsViewModel viewModel = (FlagsViewModel) session.getAttribute("flagsVM_" + gameId);
+        if (viewModel == null) return "redirect:/Flags";
+        if (!viewModel.isCorrect() && !isOver(session, gameId)) {
+            return "redirect:/Flags/play?gameId=" + gameId + "&difficulty=" + viewModel.getDifficulty().name();
+        }
+
         CountryBL targetCountry = viewModel.getTargetCountry();
 
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         ImageIO.write(targetCountry.getFlagImage(), "png", baos);
         String countryImage = Base64.getEncoder().encodeToString(baos.toByteArray());
 
-        model.addAttribute("success",      success);
+        model.addAttribute("success",      viewModel.isCorrect());
         model.addAttribute("attempts",     viewModel.getAttemps());
         model.addAttribute("countryName",  targetCountry.getName());
         model.addAttribute("countryImage", countryImage);
         model.addAttribute("guesses",      buildGuessList(viewModel));
         model.addAttribute("difficulty",   viewModel.getDifficulty());
 
-        // Game is over — release the ViewModel (and its guess/image history) from the session
-        session.removeAttribute("flagsVM_" + gameId);
-
+        // The finished game stays in the session (until the session expires) so this page can be
+        // shown again on a refresh; it's small, since each guess's raw images were already released.
         return "FlagsScreens/FlagsEndScreen";
+    }
+
+    /**
+     * These addresses only ever answered form posts. A browser reopening one of them (Safari
+     * reloading a tab that was in the background, an old bookmark) asks with GET and no game
+     * id, so send it to the Flags lobby instead of an error page.
+     */
+    @GetMapping({"/guess", "/finish", "/giveup"})
+    public String formAddressOpenedDirectly() {
+        return "redirect:/Flags";
+    }
+
+    private static boolean isOver(HttpSession session, String gameId) {
+        return Boolean.TRUE.equals(session.getAttribute("flagsOver_" + gameId));
+    }
+
+    private static void markOver(HttpSession session, String gameId) {
+        session.setAttribute("flagsOver_" + gameId, Boolean.TRUE);
     }
 
     /**

@@ -2,11 +2,18 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="description" content="Free geography games: guess countries by their flags, find them on a 3D globe, match capital cities, and take a new daily quiz. Play solo, against the computer, or 1v1 with a friend.">
     <link rel="icon" href="/favicon.svg" type="image/svg+xml">
     <link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png">
     <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    <!-- "Add to Home Screen" opens the game full screen, like the app -->
+    <link rel="manifest" href="/manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="MundoFlag">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="theme-color" content="#E8F9F4">
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="MundoFlag">
     <meta property="og:title" content="MundoFlag - geography games">
@@ -18,9 +25,7 @@
     <title>Flags - Game</title>
 
     <!-- Custom font pairing: Baloo 2 for bold display titles, Nunito for everything else -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/fonts.css?v=1">
 
     <style>
         /* Shared type scale and shadow depths, used throughout this page for consistency */
@@ -135,11 +140,20 @@
             box-shadow: var(--shadow-md);
         }
 
-        /* Difficulty badge — fixed top-left, mirrors the rules button on the right */
-        .difficulty-badge {
+        /* Top badges and buttons — same layout as the Flags Match screens: the difficulty badge
+           pinned top-left and Rules pinned top-right on desktop; on phones mobile.css turns both
+           into centered rows above the heading, so Rules stays at the top of the page. */
+        .badge-stack {
             position: fixed;
             top: 40px;
             left: 40px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 5;
+        }
+
+        .badge {
             display: flex;
             align-items: center;
             gap: 8px;
@@ -156,27 +170,40 @@
             50%      { box-shadow: var(--shadow-md); }
         }
 
-        .difficulty-badge.easy {
+        .badge.easy {
             background: linear-gradient(135deg, #e3f2fd, #ffffff);
             color: #1565c0;
             border: 2px solid #42a5f5;
         }
 
-        .difficulty-badge.hard {
+        .badge.hard {
             background: linear-gradient(135deg, #fdeaea, #ffffff);
             color: #c62828;
             border: 2px solid #ef5350;
         }
 
-        /* Rules button — fixed top-right */
-        .rules-btn {
+        .top-right-actions {
             position: fixed;
             top: 40px;
             right: 40px;
+            display: flex;
+            gap: 14px;
+            z-index: 5;
+        }
+
+        .rules-btn {
             background: white;
             color: #4CAF50;
             border: 2px solid #4CAF50;
             box-shadow: var(--shadow-sm);
+        }
+
+        /* Game data under the heading, like the Match screens' scoreboard */
+        .game-status {
+            margin: 0 0 18px;
+            font-size: var(--font-base);
+            font-weight: 700;
+            color: #555;
         }
 
         .rules-btn:hover {
@@ -302,18 +329,25 @@
             color: #4CAF50;
         }
     </style>
-    <link rel="stylesheet" href="/css/mobile.css?v=3">
+    <link rel="stylesheet" href="/css/mobile.css?v=7">
 </head>
 
 <body>
 
+<!-- Shows the difficulty this game round is locked to (set on the Start screen) -->
+<div class="badge-stack">
+    <div class="badge" th:classappend="${difficulty.name() eq 'EASY'} ? 'easy' : 'hard'">
+        <span th:text="${difficulty.name() eq 'EASY'} ? '🟢 EASY MODE' : '🔴 HARD MODE'">HARD MODE</span>
+    </div>
+</div>
+
+<div class="top-right-actions">
+    <button class="rules-btn" onclick="openRules()">RULES</button>
+</div>
+
 <h1>Flags</h1>
 
-<!-- Shows the difficulty this game round is locked to (set on the Start screen) -->
-<div class="difficulty-badge"
-     th:classappend="${difficulty.name() eq 'EASY'} ? 'easy' : 'hard'">
-    <span th:text="${difficulty.name() eq 'EASY'} ? '🟢 EASY MODE' : '🔴 HARD MODE'">HARD MODE</span>
-</div>
+<div class="game-status">Guesses: <span id="guessCount" th:text="${guesses != null ? #lists.size(guesses) : 0}">0</span></div>
 
 <!--
     FIX: gameId is embedded as a hidden field in every form.
@@ -351,8 +385,6 @@
     <button type="submit" class="giveup-btn">GIVE UP</button>
 
 </form>
-
-<button class="rules-btn" onclick="openRules()">RULES</button>
 
 <!-- Guesses list — populated by Thymeleaf -->
 <div class="guess-error" id="guessError" role="alert" hidden></div>
@@ -419,18 +451,30 @@
             errorBox.hidden = !message;
         }
 
-        function finishGame() {
-            const f = document.createElement('form');
-            f.method = 'post';
-            f.action = '/Flags/finish';
-            const field = document.createElement('input');
-            field.type = 'hidden';
-            field.name = 'gameId';
-            field.value = gameId;
-            f.appendChild(field);
-            document.body.appendChild(f);
-            f.submit();
+        // Ends the game on the server, then shows the end screen in place of this page in the
+        // browser history - so Back from the end screen returns to the lobby instead of bouncing
+        // into a finished game. (The plain form posts stay as the fallback without JavaScript.)
+        let ending = false;
+        async function endGame(path) {
+            if (ending) return;
+            ending = true;
+            try {
+                await fetch(path, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: 'gameId=' + encodeURIComponent(gameId),
+                    redirect: 'manual'
+                });
+            } catch (err) { /* the end page itself sends us on if the game is already gone */ }
+            window.location.replace('/Flags/end?gameId=' + encodeURIComponent(gameId));
         }
+
+        function finishGame() { endGame('/Flags/finish'); }
+
+        document.querySelector('form[action="/Flags/giveup"]').addEventListener('submit', function (e) {
+            e.preventDefault();
+            endGame('/Flags/giveup');
+        });
 
         function addRow(guess) {
             const row = document.createElement('div');
@@ -458,6 +502,7 @@
 
             row.append(guessedBox, resultBox);
             list.appendChild(row);
+            document.getElementById('guessCount').textContent = list.children.length;
         }
 
         form.addEventListener('submit', async function (e) {
@@ -474,6 +519,13 @@
                     body: 'gameId=' + encodeURIComponent(gameId) + '&countryName=' + encodeURIComponent(name)
                 });
                 const data = await response.json();
+                if (data.expired) {
+                    // The server forgot this game (left idle too long, or the server restarted):
+                    // reloading this page's address starts a fresh game of the same difficulty.
+                    showError('This game expired - starting a new one...');
+                    setTimeout(function () { window.location.reload(); }, 1200);
+                    return;
+                }
                 if (!data.ok) {
                     showError(data.error || 'Something went wrong. Please try again.');
                     return;
@@ -502,6 +554,7 @@
     });
 </script>
 
-<script src="/js/bg-music.js?v=1"></script>
+<script src="/js/bg-music.js?v=3"></script>
+<script src="/js/mobile.js?v=2"></script>
 </body>
 </html>

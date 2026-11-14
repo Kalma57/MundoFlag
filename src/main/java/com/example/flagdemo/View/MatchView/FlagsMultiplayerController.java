@@ -19,6 +19,7 @@ import jakarta.servlet.http.HttpSession;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
@@ -80,10 +81,9 @@ public class FlagsMultiplayerController {
         PvpMatchRoom room = registry.createRoom(difficulty, bestOf, token);
         session.setAttribute("pvpToken_" + room.getRoomCode(), token);
 
-        model.addAttribute("roomCode", room.getRoomCode());
-        model.addAttribute("playerToken", token);
-
-        return "FlagsScreens/FlagsMultiplayerWaitingScreen";
+        // Redirect to the GET room page so a refresh, Back, or Safari reopening the tab
+        // reloads a normal page instead of re-sending (or failing on) this form post.
+        return "redirect:/Flags/match/pvp/room?roomCode=" + room.getRoomCode();
     }
 
     /** Player 1 creates a new Blitz room and lands on the "waiting for opponent" screen. */
@@ -100,34 +100,33 @@ public class FlagsMultiplayerController {
         PvpMatchRoom room = registry.createBlitzRoom(difficulty, durationSeconds, token);
         session.setAttribute("pvpToken_" + room.getRoomCode(), token);
 
-        model.addAttribute("roomCode", room.getRoomCode());
-        model.addAttribute("playerToken", token);
-
-        return "FlagsScreens/FlagsMultiplayerWaitingScreen";
+        // Redirect to the GET room page so a refresh, Back, or Safari reopening the tab
+        // reloads a normal page instead of re-sending (or failing on) this form post.
+        return "redirect:/Flags/match/pvp/room?roomCode=" + room.getRoomCode();
     }
 
     /** Player 2 joins an existing room by code and lands straight on the match screen. */
     @PostMapping("/join")
     public String join(
             @RequestParam("roomCode") String roomCode,
-            Model model,
+            RedirectAttributes redirectAttributes,
             HttpSession session) throws SQLException {
 
         PvpMatchRoom room = registry.getRoom(roomCode);
         if (room == null) {
-            model.addAttribute("joinError", "Room not found - double check the code and try again.");
-            return "FlagsScreens/FlagsMultiplayerLobbyScreen";
+            redirectAttributes.addFlashAttribute("joinError", "Room not found - double check the code and try again.");
+            return "redirect:/Flags/match/pvp/lobby";
         }
 
         String token = UUID.randomUUID().toString();
         boolean joined = room.joinPlayer2(token);
         if (!joined) {
-            model.addAttribute("joinError", "That room is already full or the match is already over.");
-            return "FlagsScreens/FlagsMultiplayerLobbyScreen";
+            redirectAttributes.addFlashAttribute("joinError", "That room is already full or the match is already over.");
+            return "redirect:/Flags/match/pvp/lobby";
         }
 
         session.setAttribute("pvpToken_" + room.getRoomCode(), token);
-        return renderMatchScreen(room, 2, model);
+        return "redirect:/Flags/match/pvp/room?roomCode=" + room.getRoomCode();
     }
 
     /**
@@ -135,6 +134,16 @@ public class FlagsMultiplayerController {
      * opponent has joined, and safe to hit directly (e.g. a page refresh) since the
      * player's identity is recovered from this browser's own session.
      */
+    /**
+     * Create/join only answer form posts. A browser reopening one of those addresses (Safari
+     * reloading a background tab, Back after an old version of the site) asks with GET, so send
+     * it to the lobby instead of an error page.
+     */
+    @GetMapping({"/create", "/blitz/create", "/join"})
+    public String formAddressOpenedDirectly() {
+        return "redirect:/Flags/match/pvp/lobby";
+    }
+
     @GetMapping("/room")
     public String room(
             @RequestParam("roomCode") String roomCode,

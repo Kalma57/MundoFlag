@@ -2,11 +2,18 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="description" content="Free geography games: guess countries by their flags, find them on a 3D globe, match capital cities, and take a new daily quiz. Play solo, against the computer, or 1v1 with a friend.">
     <link rel="icon" href="/favicon.svg" type="image/svg+xml">
     <link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png">
     <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    <!-- "Add to Home Screen" opens the game full screen, like the app -->
+    <link rel="manifest" href="/manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="MundoFlag">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="theme-color" content="#E8F9F4">
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="MundoFlag">
     <meta property="og:title" content="MundoFlag - geography games">
@@ -15,11 +22,64 @@
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
     <meta name="twitter:card" content="summary_large_image">
-    <title>Page</title>
-    <link rel="stylesheet" href="/css/mobile.css?v=3">
+    <title>MundoFlag - Oops</title>
+    <link rel="stylesheet" href="/css/fonts.css?v=1">
+    <link rel="stylesheet" href="/css/mobile.css?v=7">
+<style>
+    body {
+        margin: 0;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, #e8f5e9 0%, #f1f8e9 100%);
+        font-family: 'Nunito', 'Segoe UI', sans-serif;
+        color: #333;
+        padding: 16px;
+        box-sizing: border-box;
+    }
+    .error-card {
+        background: #fff;
+        border-radius: 20px;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.12);
+        padding: 32px 28px;
+        max-width: 420px;
+        width: 100%;
+        text-align: center;
+    }
+    .error-card .emoji { font-size: 48px; }
+    .error-card h1 { margin: 10px 0 8px; font-size: 26px; color: #2f7a34; }
+    .error-card p { margin: 0 0 22px; font-size: 16px; line-height: 1.5; color: #555; }
+    .error-actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+    .error-actions a, .error-actions button {
+        border: none;
+        border-radius: 12px;
+        padding: 12px 22px;
+        font: 700 16px 'Nunito', sans-serif;
+        cursor: pointer;
+        text-decoration: none;
+    }
+    .error-home { background: #4CAF50; color: #fff; }
+    .error-back { background: #eef5ee; color: #2f7a34; }
+</style>
 </head>
 <body>
-    <h1>Generic Error Page</h1>
-<script src="/js/bg-music.js?v=1"></script>
+    <!-- Shown for any server error or unknown address. Most often reached when a game page is
+         reopened after the server already forgot that game, so it points straight back to play. -->
+    <div class="error-card">
+        <div class="emoji">🧭</div>
+        <h1 th:text="${status == 404} ? 'Page not found' : 'Something went wrong'">Something went wrong</h1>
+        <p th:text="${status == 404}
+              ? 'We could not find that page. It may have moved, or the link is old.'
+              : 'This game may have expired while the page was in the background. Start a new one from the home page.'">
+            This game may have expired while the page was in the background. Start a new one from the home page.
+        </p>
+        <div class="error-actions">
+            <a class="error-home" href="/">🏠 Home</a>
+            <button class="error-back" type="button" onclick="history.length > 1 ? history.back() : (location.href = '/')">← Back</button>
+        </div>
+    </div>
+<script src="/js/bg-music.js?v=3"></script>
+<script src="/js/mobile.js?v=2"></script>
 </body>
 </html>

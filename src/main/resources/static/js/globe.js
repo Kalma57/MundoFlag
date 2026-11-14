@@ -186,6 +186,19 @@ let guessedPoints = [];
 let selectedMapName = null;
 let countryClickCallback = null;
 
+/** Camera distance at which the whole globe (radius 100 + atmosphere) fits the canvas, in its narrower direction. */
+function fitDistance(canvas) {
+    const aspect = canvas.clientWidth / Math.max(1, canvas.clientHeight);
+    const vHalf = (50 / 2) * Math.PI / 180;                      // camera fov is 50deg vertical
+    const hHalf = Math.atan(Math.tan(vHalf) * aspect);
+    return Math.max(200, (100 * 1.12) / Math.sin(Math.min(vHalf, hHalf)));
+}
+
+/** Where the camera starts (and returns to on Play Again): desktop keeps its usual 200, phones fit the whole globe. */
+function startDistance(canvas) {
+    return canvas && canvas.clientWidth < 600 ? fitDistance(canvas) : 200;
+}
+
 export async function initGlobe() {
     const canvas = document.getElementById('globeCanvas');
     if (!canvas) return;
@@ -201,7 +214,25 @@ export async function initGlobe() {
     // native ratio multiplies the pixel count for little visible gain
     // and was a real contributor to the frame-rate lag.
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
-    renderer.setSize(canvas.clientWidth, canvas.clientHeight);
+    // false = leave the canvas's CSS size to the page; only the drawing buffer follows it
+    renderer.setSize(canvas.clientWidth, canvas.clientHeight, false);
+
+    // Phones: the desktop camera distance (200) crops the top and bottom of the globe in a small,
+    // squarer frame - start far enough back that the whole globe fits.
+    camera.position.set(0, 0, startDistance(canvas));
+
+    // Keep the picture sharp and undistorted when the frame changes size (phone rotation,
+    // window resize, the layout settling after fonts load) - it used to be sized only once.
+    if (window.ResizeObserver) {
+        new ResizeObserver(() => {
+            const w = canvas.clientWidth, h = canvas.clientHeight;
+            if (!w || !h) return;
+            renderer.setSize(w, h, false);
+            camera.aspect = w / h;
+            camera.updateProjectionMatrix();
+            renderer.render(scene, camera);
+        }).observe(canvas);
+    }
 
     // Soft fill light + a "sun" so the sphere shows a realistic lit/shaded side
     scene.add(new THREE.AmbientLight(0xffffff, 1.3));
@@ -317,8 +348,10 @@ function setupClickDetection(canvas) {
         const dy = e.clientY - pointerDownPos.y;
         pointerDownPos = null;
         // Only a near-stationary press counts as a click - anything more was a
-        // drag-to-rotate gesture and must never register as a guess.
-        if (Math.sqrt(dx * dx + dy * dy) > 6) return;
+        // drag-to-rotate gesture and must never register as a guess. A fingertip wobbles more
+        // than a mouse during a tap, so touch gets a little more room.
+        const maxMove = e.pointerType === 'touch' ? 12 : 6;
+        if (Math.sqrt(dx * dx + dy * dy) > maxMove) return;
         handleCanvasClick(e, canvas);
     });
 }
@@ -497,7 +530,7 @@ export function focusOnCountry(lat, lon) {
 /** Puts the camera back at its starting distance/angle - used when a new game starts in place. */
 export function resetCamera() {
     if (!camera) return;
-    camera.position.set(0, 0, 200);
+    camera.position.set(0, 0, startDistance(renderer && renderer.domElement));
     camera.lookAt(0, 0, 0);
     if (controls) controls.update();
 }
