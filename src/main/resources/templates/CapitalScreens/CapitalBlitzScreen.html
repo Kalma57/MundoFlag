@@ -502,7 +502,7 @@
             color: #ab47bc;
         }
     </style>
-    <link rel="stylesheet" href="/css/mobile.css?v=7">
+    <link rel="stylesheet" href="/css/mobile.css?v=11">
 </head>
 
 <body th:attr="data-match-id=${matchId}, data-mode=${mode}">
@@ -785,6 +785,7 @@
         }
         matchOverlaySub.textContent = 'Final score: ' + data.humanScore + ' - ' + data.aiScore;
         renderMatchRecap(data.questionHistory);
+        window.MundoBlitzTimedOut(matchRecap, data.timedOutOn, MODE === 'flag-to-capital' ? 'country-capital' : 'capital-country');
         matchOverlay.classList.add('active');
     }
 
@@ -886,6 +887,7 @@
 </script>
 
 <script src="/js/game-expired.js?v=1"></script>
+<script src="/js/blitz-end.js?v=1"></script>
 <script src="/js/bg-music.js?v=3"></script>
 <script src="/js/mobile.js?v=2"></script>
 </body>
