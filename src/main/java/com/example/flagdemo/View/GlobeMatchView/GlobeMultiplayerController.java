@@ -19,6 +19,7 @@ import jakarta.servlet.http.HttpSession;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.*;
 
@@ -73,10 +74,9 @@ public class GlobeMultiplayerController {
         GlobePvpMatchRoom room = registry.createRoom(bestOf, token);
         session.setAttribute("pvpGlobeToken_" + room.getRoomCode(), token);
 
-        model.addAttribute("roomCode", room.getRoomCode());
-        model.addAttribute("playerToken", token);
-
-        return "GlobeScreens/GlobeMultiplayerWaitingScreen";
+        // Redirect to the GET room page so a refresh, Back, or Safari reopening the tab
+        // reloads a normal page instead of re-sending (or failing on) this form post.
+        return "redirect:/Globe/match/pvp/room?roomCode=" + room.getRoomCode();
     }
 
     /** Player 1 creates a new Blitz room and lands on the "waiting for opponent" screen. */
@@ -92,34 +92,33 @@ public class GlobeMultiplayerController {
         GlobePvpMatchRoom room = registry.createBlitzRoom(durationSeconds, token);
         session.setAttribute("pvpGlobeToken_" + room.getRoomCode(), token);
 
-        model.addAttribute("roomCode", room.getRoomCode());
-        model.addAttribute("playerToken", token);
-
-        return "GlobeScreens/GlobeMultiplayerWaitingScreen";
+        // Redirect to the GET room page so a refresh, Back, or Safari reopening the tab
+        // reloads a normal page instead of re-sending (or failing on) this form post.
+        return "redirect:/Globe/match/pvp/room?roomCode=" + room.getRoomCode();
     }
 
     /** Player 2 joins an existing room by code and lands straight on the match screen. */
     @PostMapping("/join")
     public String join(
             @RequestParam("roomCode") String roomCode,
-            Model model,
+            RedirectAttributes redirectAttributes,
             HttpSession session) {
 
         GlobePvpMatchRoom room = registry.getRoom(roomCode);
         if (room == null) {
-            model.addAttribute("joinError", "Room not found - double check the code and try again.");
-            return "GlobeScreens/GlobeMultiplayerLobbyScreen";
+            redirectAttributes.addFlashAttribute("joinError", "Room not found - double check the code and try again.");
+            return "redirect:/Globe/match/pvp/lobby";
         }
 
         String token = UUID.randomUUID().toString();
         boolean joined = room.joinPlayer2(token);
         if (!joined) {
-            model.addAttribute("joinError", "That room is already full or the match is already over.");
-            return "GlobeScreens/GlobeMultiplayerLobbyScreen";
+            redirectAttributes.addFlashAttribute("joinError", "That room is already full or the match is already over.");
+            return "redirect:/Globe/match/pvp/lobby";
         }
 
         session.setAttribute("pvpGlobeToken_" + room.getRoomCode(), token);
-        return renderMatchScreen(room, 2, model);
+        return "redirect:/Globe/match/pvp/room?roomCode=" + room.getRoomCode();
     }
 
     /**
@@ -127,6 +126,16 @@ public class GlobeMultiplayerController {
      * opponent has joined, and safe to hit directly (e.g. a page refresh) since the
      * player's identity is recovered from this browser's own session.
      */
+    /**
+     * Create/join only answer form posts. A browser reopening one of those addresses (Safari
+     * reloading a background tab, Back after an old version of the site) asks with GET, so send
+     * it to the lobby instead of an error page.
+     */
+    @GetMapping({"/create", "/blitz/create", "/join"})
+    public String formAddressOpenedDirectly() {
+        return "redirect:/Globe/match/pvp/lobby";
+    }
+
     @GetMapping("/room")
     public String room(
             @RequestParam("roomCode") String roomCode,

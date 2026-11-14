@@ -419,18 +419,30 @@
             errorBox.hidden = !message;
         }
 
-        function finishGame() {
-            const f = document.createElement('form');
-            f.method = 'post';
-            f.action = '/Flags/finish';
-            const field = document.createElement('input');
-            field.type = 'hidden';
-            field.name = 'gameId';
-            field.value = gameId;
-            f.appendChild(field);
-            document.body.appendChild(f);
-            f.submit();
+        // Ends the game on the server, then shows the end screen in place of this page in the
+        // browser history - so Back from the end screen returns to the lobby instead of bouncing
+        // into a finished game. (The plain form posts stay as the fallback without JavaScript.)
+        let ending = false;
+        async function endGame(path) {
+            if (ending) return;
+            ending = true;
+            try {
+                await fetch(path, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: 'gameId=' + encodeURIComponent(gameId),
+                    redirect: 'manual'
+                });
+            } catch (err) { /* the end page itself sends us on if the game is already gone */ }
+            window.location.replace('/Flags/end?gameId=' + encodeURIComponent(gameId));
         }
+
+        function finishGame() { endGame('/Flags/finish'); }
+
+        document.querySelector('form[action="/Flags/giveup"]').addEventListener('submit', function (e) {
+            e.preventDefault();
+            endGame('/Flags/giveup');
+        });
 
         function addRow(guess) {
             const row = document.createElement('div');
@@ -474,6 +486,13 @@
                     body: 'gameId=' + encodeURIComponent(gameId) + '&countryName=' + encodeURIComponent(name)
                 });
                 const data = await response.json();
+                if (data.expired) {
+                    // The server forgot this game (left idle too long, or the server restarted):
+                    // reloading this page's address starts a fresh game of the same difficulty.
+                    showError('This game expired - starting a new one...');
+                    setTimeout(function () { window.location.reload(); }, 1200);
+                    return;
+                }
                 if (!data.ok) {
                     showError(data.error || 'Something went wrong. Please try again.');
                     return;

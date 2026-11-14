@@ -94,7 +94,7 @@ public class GlobeController {
 
     @RequestMapping(value = "/guess/ajax", method = {RequestMethod.POST, RequestMethod.GET})
     @ResponseBody
-    public GuessResultGlobeBL guessAjax(
+    public Object guessAjax(
             @RequestParam("countryName") String countryName,
             @RequestParam("gameId") String gameId,
             HttpSession session) {
@@ -103,7 +103,9 @@ public class GlobeController {
             GlobeViewModel viewModel =
                     (GlobeViewModel) session.getAttribute("globeVM_" + gameId);
 
-            if (viewModel == null) return null;
+            // "{}" = this game no longer exists (session expired / server restarted);
+            // the page then starts a new one in place.
+            if (viewModel == null) return Collections.emptyMap();
 
             return viewModel.Guess(countryName);
         } catch (Exception e) {

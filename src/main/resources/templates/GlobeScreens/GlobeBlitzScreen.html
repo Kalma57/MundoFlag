@@ -1008,7 +1008,7 @@
     }
 
     function applyState(data) {
-        if (!data || data.humanScore === undefined) return;
+        if (!data || data.humanScore === undefined) { window.MundoGameGone(data); return; }
 
         humanScoreText.textContent = data.humanScore;
         aiScoreText.textContent = data.aiScore;
@@ -1325,6 +1325,7 @@
     startPolling();
 </script>
 
+<script src="/js/game-expired.js?v=1"></script>
 <script src="/js/bg-music.js?v=1"></script>
 </body>
 </html>

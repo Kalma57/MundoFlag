@@ -1026,8 +1026,9 @@
         body:    "countryName=" + encodeURIComponent(country)
                + "&gameId="     + encodeURIComponent(gameId)
       });
-      const result = await response.json();
-      console.log("Server Response:", result);
+      const responseText = await response.text();
+      const result = responseText ? JSON.parse(responseText) : null;
+      if (window.MundoGameGone(result, startNewGame)) { input.value = ""; return; }
 
       if (result.colorHex && result.guessedCountry) {
         const alreadyGuessed = guessesArray.find(g => g.name === result.guessedCountry.name);
@@ -1105,6 +1106,7 @@
         body:    "gameId=" + encodeURIComponent(gameId)
       });
       const data = await response.json();
+      if (window.MundoGameGone(data, startNewGame)) return;
 
       colorCountry(data.countryName, '#25C267');
       focusOnCountry(data.latitude, data.longitude);
@@ -1128,6 +1130,7 @@
         body:    "gameId=" + encodeURIComponent(gameId)
       });
       const data = await response.json();
+      if (window.MundoGameGone(data, startNewGame)) return;
       if (!data || data.revealed === undefined) return;
 
       hintsUsedCount = data.hintsUsed;
@@ -1229,6 +1232,7 @@
   });
 </script>
 
+<script src="/js/game-expired.js?v=1"></script>
 <script src="/js/bg-music.js?v=1"></script>
 </body>
 </html>
