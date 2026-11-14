@@ -486,7 +486,10 @@
 <script src="/js/confetti.browser.js?v=1"></script>
 
 <script type="module">
-    import { initGlobe, colorCountry, focusOnCountry, onCountryClick, setSelectedCountry, isCountryColored } from '/js/globe.js?v=2058';
+    import { initGlobe, colorCountry, focusOnCountry, onCountryClick, setSelectedCountry, isCountryColored, resetGlobeColors, resetCamera } from '/js/globe.js?v=2057';
+
+    /* Starts as the server-rendered id; replaced in place by "Play Again" */
+    let gameId = GAME_ID;
 
     let guessesArray = [];
     let selectedCountry = null;
@@ -655,7 +658,7 @@
             const response = await fetch("/Capital/globe/guess/ajax", {
                 method: "POST",
                 headers: { "Content-Type": "application/x-www-form-urlencoded" },
-                body: "countryName=" + encodeURIComponent(country) + "&gameId=" + encodeURIComponent(GAME_ID)
+                body: "countryName=" + encodeURIComponent(country) + "&gameId=" + encodeURIComponent(gameId)
             });
             // A guess the server can't match to a country in our own data comes back as an
             // empty body (not JSON "null"), so response.json() would throw here.
@@ -714,7 +717,7 @@
             const response = await fetch("/Capital/globe/giveup/ajax", {
                 method: "POST",
                 headers: { "Content-Type": "application/x-www-form-urlencoded" },
-                body: "gameId=" + encodeURIComponent(GAME_ID)
+                body: "gameId=" + encodeURIComponent(gameId)
             });
             const result = await response.json();
             if (result && result.countryName) {
@@ -725,7 +728,54 @@
         }
     });
 
-    document.getElementById("btn-play-again").addEventListener('click', () => window.location.reload());
+    /* Play Again starts a new game on the same page instead of reloading it, so the
+       globe that's already built (map data, 3D meshes, texture) is reused as-is. */
+    let startingNewGame = false;
+    async function startNewGame() {
+        if (startingNewGame) return;
+        startingNewGame = true;
+        const playAgainBtn = document.getElementById("btn-play-again");
+        playAgainBtn.disabled = true;
+        let data;
+        try {
+            const response = await fetch("/Capital/globe/new/ajax", {
+                method: "POST",
+                headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                body: "oldGameId=" + encodeURIComponent(gameId)
+            });
+            data = await response.json();
+            if (!data || !data.gameId) throw new Error("No gameId in response");
+        } catch (error) {
+            console.error("New game error, falling back to a page reload:", error);
+            window.location.reload();
+            return;
+        } finally {
+            startingNewGame = false;
+            playAgainBtn.disabled = false;
+        }
+        gameId = data.gameId;
+        document.getElementById('promptCapital').textContent = data.capital;
+
+        if (typeof confetti !== 'undefined' && confetti.reset) confetti.reset();
+
+        guessesArray = [];
+        renderGuesses();
+        document.getElementById('neighbor-toast').classList.remove('show');
+
+        document.getElementById('end-screen-overlay').style.display = 'none';
+        document.getElementById('end-screen-country').style.display = 'none';
+        document.getElementById('end-screen-closest').style.display = 'none';
+        document.getElementById('end-history').style.display = 'none';
+
+        resetGlobeColors();
+        resetCamera();
+
+        gameOver = false;
+        clearSelection();
+        document.getElementById("btn-give-up").disabled = false;
+    }
+
+    document.getElementById("btn-play-again").addEventListener('click', startNewGame);
     document.getElementById("btn-home").addEventListener('click', () => window.location.href = '/');
 
     function openRules() {

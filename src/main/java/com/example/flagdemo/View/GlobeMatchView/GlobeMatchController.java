@@ -89,6 +89,30 @@ public class GlobeMatchController {
         return "GlobeScreens/GlobeMatchScreen";
     }
 
+    /**
+     * "Play Again" without reloading the page: starts a new match with the same settings and
+     * returns only its matchId, so the browser keeps the globe it already built instead of
+     * re-downloading and rebuilding it. The finished match is dropped from the session.
+     */
+    @PostMapping("/restart/ajax")
+    @ResponseBody
+    public Map<String, Object> restartAjax(
+            @RequestParam(name = "aiLevel", defaultValue = "MEDIUM") AiSkillLevel aiLevel,
+            @RequestParam(name = "bestOf", defaultValue = "3") int bestOf,
+            @RequestParam(name = "oldMatchId", required = false) String oldMatchId,
+            HttpSession session) {
+
+        if (oldMatchId != null) session.removeAttribute("globeMatchVM_" + oldMatchId);
+
+        bestOf = normalizeBestOf(bestOf);
+        String matchId = UUID.randomUUID().toString();
+        GlobeMatchViewModel viewModel = new GlobeMatchViewModel(countryController, aiLevel, (bestOf + 1) / 2);
+        viewModel.startMatch();
+        session.setAttribute("globeMatchVM_" + matchId, viewModel);
+
+        return Map.of("matchId", matchId);
+    }
+
     private int normalizeBestOf(int bestOf) {
         return VALID_BEST_OF.contains(bestOf) ? bestOf : 3;
     }

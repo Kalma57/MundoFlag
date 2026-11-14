@@ -70,6 +70,30 @@ public class CapitalGlobeMatchController {
         return "CapitalScreens/CapitalGlobeMatchScreen";
     }
 
+    /**
+     * "Play Again" without reloading the page: starts a new match with the same settings and
+     * returns only its matchId, so the browser keeps the globe it already built instead of
+     * re-downloading and rebuilding it. The finished match is dropped from the session.
+     */
+    @PostMapping("/restart/ajax")
+    @ResponseBody
+    public Map<String, Object> restartAjax(
+            @RequestParam(name = "aiLevel", defaultValue = "MEDIUM") AiSkillLevel aiLevel,
+            @RequestParam(name = "target", defaultValue = "3") int target,
+            @RequestParam(name = "oldMatchId", required = false) String oldMatchId,
+            HttpSession session) {
+
+        if (oldMatchId != null) session.removeAttribute("capitalGlobeMatchVM_" + oldMatchId);
+
+        target = normalizeTarget(target);
+        String matchId = UUID.randomUUID().toString();
+        CapitalGlobeMatchViewModel viewModel = new CapitalGlobeMatchViewModel(countryController, aiLevel, target);
+        viewModel.startMatch();
+        session.setAttribute("capitalGlobeMatchVM_" + matchId, viewModel);
+
+        return Map.of("matchId", matchId);
+    }
+
     private int normalizeTarget(int target) {
         return VALID_TARGETS.contains(target) ? target : 3;
     }

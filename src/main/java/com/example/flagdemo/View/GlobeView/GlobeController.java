@@ -70,6 +70,28 @@ public class GlobeController {
         return "GlobeScreens/GlobeGameScreen";
     }
 
+    /*
+     * "Play Again" without reloading the page: starts a fresh game and returns
+     * only its new gameId, so the browser keeps the globe it already built
+     * (a full reload re-downloads and rebuilds the whole 3D globe every time).
+     * The finished game's ViewModel is dropped from the session.
+     */
+    @PostMapping("/new/ajax")
+    @ResponseBody
+    public Map<String, Object> newGameAjax(
+            @RequestParam(name = "oldGameId", required = false) String oldGameId,
+            HttpSession session) throws SQLException {
+
+        if (oldGameId != null) session.removeAttribute("globeVM_" + oldGameId);
+
+        String gameId = UUID.randomUUID().toString();
+        GlobeViewModel viewModel = new GlobeViewModel(countryController);
+        viewModel.StartNewGame();
+        session.setAttribute("globeVM_" + gameId, viewModel);
+
+        return Map.of("gameId", gameId);
+    }
+
     @RequestMapping(value = "/guess/ajax", method = {RequestMethod.POST, RequestMethod.GET})
     @ResponseBody
     public Object guessAjax(

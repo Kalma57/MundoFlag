@@ -348,14 +348,14 @@
 </div>
 
 <script th:inline="javascript">
-    const MATCH_ID = /*[[${matchId}]]*/ 'fallback-id';
+    let MATCH_ID = /*[[${matchId}]]*/ 'fallback-id'; // replaced in place by Play Again
 </script>
 
 <script src="/js/topojson-client.min.js?v=2"></script>
 <script src="/js/confetti.browser.js?v=1"></script>
 
 <script type="module">
-    import { initGlobe, colorCountry, focusOnCountry, resetGlobeColors, onCountryClick, setSelectedCountry, isCountryColored } from '/js/globe.js?v=2058';
+    import { initGlobe, colorCountry, focusOnCountry, resetGlobeColors, onCountryClick, setSelectedCountry, isCountryColored, resetCamera } from '/js/globe.js?v=2057';
 
     const promptCapital = document.getElementById('promptCapital');
     const feedbackBanner = document.getElementById('feedbackBanner');
@@ -670,9 +670,11 @@
 
     async function pollStatus() {
         if (roundOverHandled || matchIsOver || isPaused) return;
+        const polledMatchId = MATCH_ID;
         try {
             const response = await fetch(`/Capital/globe/match/status/ajax?` + matchParams());
             const data = await response.json();
+            if (polledMatchId !== MATCH_ID) return; // a reply for a match that Play Again already replaced
             applyState(data);
         } catch (err) {
             console.error('Status poll error:', err);
@@ -698,6 +700,54 @@
     document.addEventListener('keydown', function (e) {
         if (e.key === 'Escape') { closeRules(); return; }
         if (e.key === 'Enter' && pauseOverlay.classList.contains('active')) { e.preventDefault(); resumeBtn.click(); }
+    });
+
+
+    /* Play Again starts a new match on the same page instead of loading the start URL again,
+       so the globe that's already built (map data, 3D meshes, texture) is reused as-is. The
+       link keeps its href (same settings as this match) as the fallback if the request fails. */
+    const playAgainLink = matchOverlayPanel.querySelector('.overlay-btn.primary');
+    let restarting = false;
+    async function restartMatch() {
+        if (restarting) return;
+        restarting = true;
+        try {
+            const params = new URL(playAgainLink.href).searchParams;
+            params.set('oldMatchId', MATCH_ID);
+            const data = await postForm('/Capital/globe/match/restart/ajax', params.toString());
+            if (!data || !data.matchId) throw new Error('No matchId in response');
+            MATCH_ID = data.matchId;
+        } catch (err) {
+            console.error('Restart error, falling back to a page load:', err);
+            window.location.href = playAgainLink.href;
+            return;
+        } finally {
+            restarting = false;
+        }
+        clearTimeout(autoAdvanceTimer);
+        clearInterval(statusPollTimer);
+        busy = false;
+        matchIsOver = false;
+        roundOverHandled = false;
+        isPaused = false;
+        if (typeof confetti !== 'undefined' && confetti.reset) confetti.reset();
+        matchRecap.innerHTML = '';
+        pauseOverlay.classList.remove('active');
+        feedbackBanner.classList.remove('shown', 'correct', 'wrong');
+        document.getElementById('neighbor-toast').classList.remove('show');
+        promptCapital.textContent = 'Loading...';
+        resetGlobeColors();
+        clearSelection();
+        setGuessingEnabled(true);
+        resetCamera();
+        matchOverlay.classList.remove('active');
+        pollStatus();
+        startPolling();
+    }
+    playAgainLink.addEventListener('click', function (e) {
+        if (e.ctrlKey || e.metaKey || e.shiftKey) return; // opening it in a new tab/window stays a normal link
+        e.preventDefault();
+        restartMatch();
     });
 
     pollStatus();

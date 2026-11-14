@@ -819,9 +819,9 @@
 <script src="/js/topojson-client.min.js?v=2"></script>
 
 <script type="module" th:inline="none">
-    import { initGlobe, colorCountry, focusOnCountry, resetGlobeColors } from '/js/globe.js?v=2058';
+    import { initGlobe, colorCountry, focusOnCountry, resetGlobeColors, resetCamera } from '/js/globe.js?v=2057';
 
-    const MATCH_ID = document.body.getAttribute('data-match-id');
+    let MATCH_ID = document.body.getAttribute('data-match-id'); // replaced in place by Play Again
 
     const guessForm       = document.getElementById('guessForm');
     const countryInput    = document.getElementById('countryInput');
@@ -1214,9 +1214,11 @@
 
     async function pollStatus() {
         if (roundOverHandled || matchIsOver || isPaused) return;
+        const polledMatchId = MATCH_ID;
         try {
             const response = await fetch('/Globe/match/status/ajax?matchId=' + encodeURIComponent(MATCH_ID));
             const data = await response.json();
+            if (polledMatchId !== MATCH_ID) return; // a reply for a match that Play Again already replaced
             applyState(data);
         } catch (err) {
             console.error('Status poll error:', err);
@@ -1266,6 +1268,60 @@
     countryInput.focus();
 
     // Kick off the first poll immediately, then every second after that
+
+    /* Play Again starts a new match on the same page instead of loading the start URL again,
+       so the globe that's already built (map data, 3D meshes, texture) is reused as-is. The
+       link keeps its href (same settings as this match) as the fallback if the request fails. */
+    const playAgainLink = matchOverlayPanel.querySelector('.overlay-btn.primary');
+    let restarting = false;
+    async function restartMatch() {
+        if (restarting) return;
+        restarting = true;
+        try {
+            const params = new URL(playAgainLink.href).searchParams;
+            params.set('oldMatchId', MATCH_ID);
+            const data = await postForm('/Globe/match/restart/ajax', params.toString());
+            if (!data || !data.matchId) throw new Error('No matchId in response');
+            MATCH_ID = data.matchId;
+        } catch (err) {
+            console.error('Restart error, falling back to a page load:', err);
+            window.location.href = playAgainLink.href;
+            return;
+        } finally {
+            restarting = false;
+        }
+        clearTimeout(autoAdvanceTimer);
+        clearInterval(statusPollTimer);
+        busy = false;
+        matchIsOver = false;
+        roundOverHandled = false;
+        isPaused = false;
+        guessesArray = [];
+        guessesList.innerHTML = '';
+        matchRecap.innerHTML = '';
+        roundOverlay.classList.remove('active');
+        pauseOverlay.classList.remove('active');
+        hintReveal.textContent = '';
+        hintReveal.classList.remove('shown');
+        graceBanner.textContent = '';
+        graceBanner.classList.remove('shown');
+        document.getElementById('neighbor-toast').classList.remove('show');
+        resetProximityBanner();
+        resetGlobeColors();
+        countryInput.value = '';
+        setGuessingEnabled(true);
+        countryInput.focus();
+        resetCamera();
+        matchOverlay.classList.remove('active');
+        pollStatus();
+        startPolling();
+    }
+    playAgainLink.addEventListener('click', function (e) {
+        if (e.ctrlKey || e.metaKey || e.shiftKey) return; // opening it in a new tab/window stays a normal link
+        e.preventDefault();
+        restartMatch();
+    });
+
     pollStatus();
     startPolling();
 </script>

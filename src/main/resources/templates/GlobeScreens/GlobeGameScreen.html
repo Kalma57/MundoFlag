@@ -842,7 +842,10 @@
 
 <!-- GAME LOGIC -->
 <script type="module">
-  import { initGlobe, colorCountry, focusOnCountry } from '/js/globe.js?v=2058';
+  import { initGlobe, colorCountry, focusOnCountry, resetGlobeColors, resetCamera } from '/js/globe.js?v=2057';
+
+  /* Starts as the server-rendered id; replaced in place by "Play Again" */
+  let gameId = GAME_ID;
 
   let guessesArray   = [];
   let hintsUsedCount = 0;
@@ -869,7 +872,7 @@
      retrieves the correct ViewModel for this window */
   async function loadCountries() {
     try {
-      const response  = await fetch("/Globe/countries?gameId=" + encodeURIComponent(GAME_ID));
+      const response  = await fetch("/Globe/countries?gameId=" + encodeURIComponent(gameId));
       const countries = await response.json();
       const list      = document.getElementById("countriesList");
       countries.forEach(country => {
@@ -1020,7 +1023,7 @@
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
         /* FIX: gameId tells the controller which ViewModel to use */
         body:    "countryName=" + encodeURIComponent(country)
-               + "&gameId="     + encodeURIComponent(GAME_ID)
+               + "&gameId="     + encodeURIComponent(gameId)
       });
       const result = await response.json();
       console.log("Server Response:", result);
@@ -1105,7 +1108,7 @@
         method:  "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
         /* FIX: gameId tells the controller which ViewModel to use */
-        body:    "gameId=" + encodeURIComponent(GAME_ID)
+        body:    "gameId=" + encodeURIComponent(gameId)
       });
       const data = await response.json();
 
@@ -1128,7 +1131,7 @@
       const response = await fetch("/Globe/hint/ajax", {
         method:  "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body:    "gameId=" + encodeURIComponent(GAME_ID)
+        body:    "gameId=" + encodeURIComponent(gameId)
       });
       const data = await response.json();
       if (!data || data.revealed === undefined) return;
@@ -1155,7 +1158,63 @@
     }
   });
 
-  document.getElementById("btn-play-again").addEventListener('click', () => window.location.reload());
+  /* Play Again starts a new game on the same page instead of reloading it, so the
+     globe that's already built (map data, 3D meshes, texture) is reused as-is. */
+  let startingNewGame = false;
+  async function startNewGame() {
+    if (startingNewGame) return;
+    startingNewGame = true;
+    const playAgainBtn = document.getElementById("btn-play-again");
+    playAgainBtn.disabled = true;
+    try {
+      const response = await fetch("/Globe/new/ajax", {
+        method:  "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body:    "oldGameId=" + encodeURIComponent(gameId)
+      });
+      const data = await response.json();
+      if (!data || !data.gameId) throw new Error("No gameId in response");
+      gameId = data.gameId;
+    } catch (error) {
+      console.error("New game error, falling back to a page reload:", error);
+      window.location.reload();
+      return;
+    } finally {
+      startingNewGame = false;
+      playAgainBtn.disabled = false;
+    }
+
+    if (typeof confetti !== 'undefined' && confetti.reset) confetti.reset();
+
+    guessesArray   = [];
+    hintsUsedCount = 0;
+    renderGuesses();
+
+    document.getElementById('hintPanel').style.display   = 'none';
+    document.getElementById('hintReveal').textContent    = '';
+    document.getElementById('hintCount').textContent     = '0';
+    document.getElementById('neighbor-toast').classList.remove('show');
+
+    const overlay = document.getElementById('end-screen-overlay');
+    overlay.style.display = 'none';
+    overlay.classList.remove('is-win', 'is-loss');
+    document.getElementById('end-screen-country').style.display = 'none';
+    document.getElementById('end-screen-closest').style.display = 'none';
+    document.getElementById('end-history').style.display        = 'none';
+
+    resetGlobeColors();
+    resetCamera();
+
+    const input = document.getElementById("countryInput");
+    input.disabled = false;
+    input.value    = "";
+    document.getElementById("guessBtn").disabled    = false;
+    document.getElementById("btn-give-up").disabled = false;
+    document.getElementById("btn-hint").disabled    = false;
+    input.focus();
+  }
+
+  document.getElementById("btn-play-again").addEventListener('click', startNewGame);
   document.getElementById("btn-home").addEventListener('click',       () => window.location.href = '/');
 
   loadCountries();
