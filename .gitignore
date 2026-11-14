@@ -47,3 +47,5 @@ videos/
 .local-backups/
 
 deploy/oracle/.env
+
+stats/

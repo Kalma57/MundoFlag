@@ -1,0 +1,23 @@
+{
+  "name": "MundoFlag",
+  "short_name": "MundoFlag",
+  "description": "Geography games: flags, a 3D globe, capitals and a daily quiz.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#E8F9F4",
+  "theme_color": "#2BB3A3",
+  "icons": [
+    {
+      "src": "/img/app-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/img/app-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

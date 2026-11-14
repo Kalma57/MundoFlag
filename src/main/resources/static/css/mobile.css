@@ -3,6 +3,91 @@
  * desktop styles, and only on narrow screens - the desktop layout is untouched.
  * !important is used because many pages set these properties with equally specific selectors.
  */
+/* ================= Country suggestions (all screen sizes) - built by /js/mobile.js ================= */
+.mf-suggest {
+    position: fixed;
+    z-index: 10000;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    background: #fff;
+    border-radius: 14px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18), 0 0 0 1px rgba(0, 0, 0, 0.06);
+    padding: 4px;
+    font-family: 'Nunito', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+.mf-suggest[hidden] { display: none; }
+.mf-suggest-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    min-height: 44px;                 /* comfortable finger target */
+    padding: 8px 12px;
+    border-radius: 10px;
+    font-size: 16px;
+    font-weight: 700;
+    color: #263238;
+    text-align: left;
+    cursor: pointer;
+    -webkit-user-select: none;
+    user-select: none;
+}
+.mf-suggest-item + .mf-suggest-item { border-top: 1px solid rgba(0, 0, 0, 0.05); }
+.mf-suggest-item:hover, .mf-suggest-item.active { background: #eef6ff; }
+.mf-suggest-alias {
+    font-size: 13px;
+    font-weight: 600;
+    color: #78909c;
+    white-space: nowrap;
+}
+
+/* ================= Small "Copied" message (window.MundoFlag.share in /js/mobile.js) ================= */
+.mf-toast {
+    position: fixed;
+    left: 50%;
+    bottom: calc(28px + env(safe-area-inset-bottom, 0px));
+    transform: translate(-50%, 20px);
+    z-index: 10001;
+    max-width: calc(100vw - 32px);
+    padding: 12px 18px;
+    border-radius: 999px;
+    background: rgba(33, 33, 33, 0.92);
+    color: #fff;
+    font: 700 15px 'Nunito', 'Segoe UI', sans-serif;
+    opacity: 0;
+    transition: opacity 0.25s, transform 0.25s;
+    pointer-events: none;
+}
+.mf-toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+/* ================= Touch screens (phones, tablets, the app) ================= */
+@media (hover: none), (pointer: coarse) {
+    html {
+        -webkit-tap-highlight-color: transparent;   /* no grey flash on every tap */
+        -webkit-text-size-adjust: 100%;             /* iOS: don't inflate text on rotation */
+    }
+    body {
+        touch-action: manipulation;                 /* no double-tap zoom, no 300ms tap delay */
+        overscroll-behavior-y: none;                /* no rubber-band / pull-to-refresh on the game */
+        -webkit-user-select: none;                  /* long-press doesn't select page text */
+        user-select: none;
+    }
+    input, textarea, [contenteditable] {
+        -webkit-user-select: text;
+        user-select: text;
+    }
+    img { -webkit-touch-callout: none; }            /* long-press on a flag doesn't pop "save image" */
+
+    /* Hover lifts/zooms get "stuck" after a tap on touch screens - keep them for mouse users only */
+    .back-link:hover, .rules-btn:hover, .pause-btn:hover, .start-btn:hover, .copy-btn:hover,
+    .action-btn:hover, .top-btn:hover, .home-btn:hover, .guess-row:hover, .mode-card:hover,
+    .overlay-btn:hover, .option-card label:hover, .match-type-card label:hover,
+    .guess-btn:hover, .giveup-btn:hover, .secondary-btn:hover, #guessBtn:hover,
+    .option-btn:hover, .hint-btn:hover, .mode-card:hover .mode-cta {
+        transform: none !important;
+    }
+}
+
 /* Laptops (e.g. 1280-1366px): rows of five 230px cards were wider than the screen; let them wrap */
 @media (min-width: 1181px) and (max-width: 1420px) {
     .modes-grid, .options-grid {
@@ -69,10 +154,13 @@
     }
 
     /* Room at the top for the corner buttons (Back, badges, Rules...), which scroll with the page here */
+    /* env(safe-area-inset-*) = the notch / status bar / home bar / rounded corners in the app
+       (viewport-fit=cover lets the page draw under them; these keep the content clear of them) */
     body {
-        padding-top: 76px !important;
-        padding-left: 16px !important;
-        padding-right: 16px !important;
+        padding-top: calc(76px + env(safe-area-inset-top, 0px)) !important;
+        padding-left: calc(16px + env(safe-area-inset-left, 0px)) !important;
+        padding-right: calc(16px + env(safe-area-inset-right, 0px)) !important;
+        padding-bottom: calc(76px + env(safe-area-inset-bottom, 0px)) !important; /* room for the music button */
     }
 
     /* ---------- Headings ---------- */
@@ -98,34 +186,39 @@
     /* ---------- Corner buttons: pinned to the screen on desktop, part of the page top here ---------- */
     .back-link, .difficulty-badge, .timer-badge, .daily-quiz-badge {
         position: absolute !important;
-        top: 16px !important;
-        left: 16px !important;
+        top: calc(16px + env(safe-area-inset-top, 0px)) !important;
+        left: calc(16px + env(safe-area-inset-left, 0px)) !important;
         right: auto !important;
     }
 
     .daily-quiz-badge {
         left: auto !important;
-        right: 16px !important;
+        right: calc(16px + env(safe-area-inset-right, 0px)) !important;
     }
 
     .rules-btn, .top-actions, .top-right-controls {
         position: absolute !important;
-        top: 16px !important;
-        right: 16px !important;
+        top: calc(16px + env(safe-area-inset-top, 0px)) !important;
+        right: calc(16px + env(safe-area-inset-right, 0px)) !important;
         left: auto !important;
     }
 
     .back-link, .difficulty-badge, .rules-btn, .daily-quiz-badge, .timer-badge,
     .top-actions > *, .top-right-actions > *, .top-right-controls > *, .badge-stack > * {
         font-size: 13px !important;
-        padding: 7px 12px !important;
+        padding: 7px 14px !important;
+        min-height: 40px;                    /* big enough to hit with a thumb */
+        display: inline-flex !important;
+        align-items: center;
+        justify-content: center;
+        box-sizing: border-box;
     }
 
     /* Match screens: the badge stack (difficulty / AI / format) and the Pause+Rules group are the
        first things in the page, right before the heading - so here they simply flow above it as
        centered rows instead of being pinned over it */
     body:has(> .badge-stack) {
-        padding-top: 14px !important;
+        padding-top: calc(14px + env(safe-area-inset-top, 0px)) !important;
     }
 
     .badge-stack, .top-right-actions {
@@ -224,40 +317,6 @@
     #globeContainer {
         width: 100% !important;
         height: min(92vw, 440px) !important;
-    }
-
-    /* ---------- Flags guesses: guessed flag and result side by side ----------
-       On desktop each flag is a fixed 300x225 (4:3) frame. On a phone two of those don't fit:
-       the frame used to get narrower while keeping its height, so the flag was cut at the sides.
-       Here each flag takes half the row and keeps the same 4:3 frame, just smaller. (Every flag
-       image is a 400x400 square with the flag in a 4:3 band in the middle, so a 4:3 frame with
-       object-fit: cover shows exactly the whole flag, like on desktop.) Side by side keeps the
-       two easy to compare, which is the whole point of the game. Only flag rows have .flag
-       children, so the Globe guess lists are not affected. */
-    .guess-row:has(> .flag) {
-        gap: 12px !important;
-        padding: 12px !important;
-        align-items: flex-end !important;
-    }
-
-    .guess-row > .flag {
-        flex: 1 1 0 !important;
-        min-width: 0 !important;
-    }
-
-    .guess-row > .flag img {
-        width: 100% !important;
-        height: auto !important;
-        aspect-ratio: 4 / 3;
-        object-fit: cover !important;
-        border-radius: 8px !important;
-    }
-
-    .guess-row > .flag .guess-label {
-        font-size: 14px !important;
-        margin-bottom: 6px !important;
-        text-align: center;
-        overflow-wrap: anywhere;
     }
 
     /* ---------- End-of-match boxes (every Match / Blitz mode, vs computer and vs friend) ----------
@@ -371,5 +430,130 @@
     /* ---------- Anything image-like never wider than the screen ---------- */
     img, video {
         max-width: 100%;
+    }
+
+    /* ---------- Screens built to fit exactly one desktop screen (Capital matches) ----------
+       They lock the page to 100vh with no scrolling; on a phone the content doesn't fit, so the
+       pieces got squeezed on top of each other (the title vanished behind the question card).
+       Here the page simply grows and scrolls. */
+    html, body {
+        height: auto !important;
+    }
+    body {
+        min-height: 100vh;
+        min-height: 100dvh;
+        overflow-y: visible !important;
+    }
+    body > * {
+        flex-shrink: 0 !important;
+    }
+
+    /* ---------- Rules drawer: a real close button, and full width ---------- */
+    .rules-panel {
+        width: 100% !important;
+        max-width: 100% !important;
+        padding-top: calc(20px + env(safe-area-inset-top, 0px)) !important;
+        padding-bottom: calc(20px + env(safe-area-inset-bottom, 0px)) !important;
+    }
+    .close-rules {
+        min-width: 44px;
+        min-height: 44px;
+        display: inline-flex !important;
+        align-items: center;
+        justify-content: center;
+    }
+
+    /* ---------- Flags: each guess = your flag + the result, side by side and compact ----------
+       (desktop shows two 300x225 pictures; squeezed to phone width with the same fixed height they
+       became tall, heavily cropped strips about 300px high per guess) */
+    .guesses {
+        gap: 12px !important;
+        margin-top: 18px !important;
+    }
+    /* (only rows built as "your flag | result" - Globe's small one-line guess rows keep their look) */
+    .guess-row:has(> .flag) {
+        gap: 10px !important;
+        padding: 10px !important;
+        border-radius: 14px !important;
+        align-items: flex-start !important;
+        width: 100% !important;
+        box-sizing: border-box;
+    }
+    .guess-row > .flag {
+        flex: 1 1 0 !important;
+        min-width: 0 !important;
+    }
+    .guess-row > .flag img {
+        width: 100% !important;
+        height: auto !important;
+        aspect-ratio: 4 / 3;
+        object-fit: cover;
+        border-radius: 8px !important;
+    }
+    .guess-row > .flag .guess-label {
+        font-size: 13px !important;
+        margin-bottom: 6px !important;
+        max-width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    /* ---------- vs Computer / vs Friend (Flags): opponent's progress right under your guess box ----------
+       Your guesses used to come first, pushing the opponent's card below every flag you'd tried.
+       "display: contents" lets your column's pieces line up with the opponent card, so the
+       guess list can be moved after it. */
+    .match-columns:has(> .your-column > .guesses) > .your-column {
+        display: contents !important;
+    }
+    .match-columns > .your-column > .guesses {
+        order: 3;
+    }
+    /* your column centred its pieces; keep that now that they sit directly in the outer layout */
+    .match-columns:has(> .your-column > .guesses) > .your-column > * {
+        align-self: center;
+    }
+    .match-columns:has(> .your-column > .guesses) > .your-column > :is(.guess-form, .guesses) {
+        align-self: stretch;
+    }
+    .match-columns:has(> .your-column > .guesses) > .opponent-column {
+        order: 2;
+    }
+
+    /* ---------- Globe (solo): guess box + Guess button share the row instead of a fixed 240px box ---------- */
+    .guess-controls {
+        width: 100%;
+        gap: 8px !important;
+    }
+    .guess-controls > input {
+        flex: 1 1 auto !important;
+        width: auto !important;
+        min-width: 0 !important;
+    }
+    .guess-controls > button {
+        flex: none;
+    }
+
+    /* ---------- Footer "Credits" link: a finger-sized target ---------- */
+    .site-footer a {
+        display: inline-block;
+        padding: 12px 16px;
+    }
+
+    /* ---------- Music button: smaller and quieter so it doesn't cover the game ---------- */
+    #bg-music-toggle {
+        width: 38px !important;
+        height: 38px !important;
+        line-height: 38px !important;
+        font-size: 17px !important;
+        opacity: 0.75;
+    }
+
+    /* ---------- Overlays / end screens ---------- */
+    .overlay-content, .end-screen-content, .modal-content {
+        max-width: calc(100vw - 24px) !important;
+        max-height: calc(100dvh - 24px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+        overflow-y: auto;
+        box-sizing: border-box;
     }
 }

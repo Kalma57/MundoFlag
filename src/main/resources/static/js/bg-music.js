@@ -51,6 +51,13 @@
 
     // Save the position before leaving the page (pagehide also fires on mobile / bfcache).
     window.addEventListener('pagehide', save);
+
+    // Phone / app: stop the music while the app is in the background (home button, another app,
+    // screen locked) and pick it up again on return - otherwise it keeps playing over everything.
+    document.addEventListener('visibilitychange', () => {
+        if (document.hidden) { save(); audio.pause(); }
+        else tryPlay();
+    });
     setInterval(save, 2000);
 
     // Small mute/unmute button in the corner.
@@ -58,7 +65,9 @@
         const btn = document.createElement('button');
         btn.type = 'button';
         btn.id = 'bg-music-toggle';
-        btn.style.cssText = 'position:fixed;bottom:16px;left:16px;z-index:9999;width:44px;height:44px;' +
+        // env(safe-area-inset-*) keeps it clear of the iPhone home bar / rounded corners (0 elsewhere)
+        btn.style.cssText = 'position:fixed;bottom:calc(16px + env(safe-area-inset-bottom, 0px));' +
+            'left:calc(16px + env(safe-area-inset-left, 0px));z-index:9999;width:44px;height:44px;' +
             'border-radius:50%;border:none;cursor:pointer;font-size:20px;line-height:44px;padding:0;' +
             'background:rgba(0,0,0,0.55);color:#fff;box-shadow:0 2px 8px rgba(0,0,0,0.3);';
         const render = () => {

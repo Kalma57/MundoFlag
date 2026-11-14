@@ -2,11 +2,18 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="description" content="Free geography games: guess countries by their flags, find them on a 3D globe, match capital cities, and take a new daily quiz. Play solo, against the computer, or 1v1 with a friend.">
     <link rel="icon" href="/favicon.svg" type="image/svg+xml">
     <link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png">
     <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    <!-- "Add to Home Screen" opens the game full screen, like the app -->
+    <link rel="manifest" href="/manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="MundoFlag">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="theme-color" content="#E8F9F4">
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="MundoFlag">
     <meta property="og:title" content="MundoFlag - geography games">
@@ -17,9 +24,7 @@
     <meta name="twitter:card" content="summary_large_image">
     <title>Daily Quiz: Already Played</title>
 
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/fonts.css?v=1">
 
     <style>
         :root {
@@ -71,8 +76,12 @@
         .info-card p { font-size: 21px; line-height: 1.7; color: #333; }
 
         .come-back { font-size: 19px; color: #888; font-weight: 700; }
+        .share-btn { margin: 0 auto 18px; padding: 14px 30px; font-size: 20px; font-weight: 800; border: none; border-radius: 12px;
+                     cursor: pointer; color: #fff; background: linear-gradient(135deg, var(--orange), var(--orange-dark));
+                     box-shadow: 0 8px 18px rgba(0,0,0,0.2); font-family: inherit; }
+        .share-btn[hidden] { display: none; }
     </style>
-    <link rel="stylesheet" href="/css/mobile.css?v=6">
+    <link rel="stylesheet" href="/css/mobile.css?v=7">
 </head>
 
 <body>
@@ -92,6 +101,9 @@
     </div>
 </div>
 
+<!-- Shown only if this device finished today's quiz (the play page saved the result text) -->
+<button class="share-btn" id="shareResultBtn" type="button" hidden>📤 Share my result</button>
+
 <div class="years-ago" th:if="${yearsAgo}" th:text="${yearsAgo} + (${yearsAgo} == 1 ? ' YEAR AGO TODAY' : ' YEARS AGO TODAY')">5 YEARS AGO TODAY</div>
 
 <div class="info-card" th:if="${eventTitle}">
@@ -100,6 +112,20 @@
 </div>
 
 <div class="come-back">Come back tomorrow for a new country.</div>
+
+<script>
+    (function () {
+        let saved = null;
+        try { saved = JSON.parse(localStorage.getItem('mundoflag.daily.result') || 'null'); } catch (e) { /* no storage */ }
+        if (!saved || saved.day !== new Date().toISOString().slice(0, 10)) return;
+        const btn = document.getElementById('shareResultBtn');
+        btn.hidden = false;
+        btn.addEventListener('click', async () => {
+            const how = await window.MundoFlag.share(saved.text);
+            if (how !== 'cancelled') window.MundoFlag.countEvent('daily-share');
+        });
+    })();
+</script>
 
 <script th:if="${countryName}" th:inline="javascript">
     // FlagPath from the DB is a raw filesystem-style path (e.g. /static/DB/FlagsImages/usa.png),
@@ -112,6 +138,7 @@
     document.getElementById('countryHeader').hidden = false;
 </script>
 
-<script src="/js/bg-music.js?v=2"></script>
+<script src="/js/bg-music.js?v=3"></script>
+<script src="/js/mobile.js?v=2"></script>
 </body>
 </html>

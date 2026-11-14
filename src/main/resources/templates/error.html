@@ -2,11 +2,18 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="description" content="Free geography games: guess countries by their flags, find them on a 3D globe, match capital cities, and take a new daily quiz. Play solo, against the computer, or 1v1 with a friend.">
     <link rel="icon" href="/favicon.svg" type="image/svg+xml">
     <link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png">
     <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    <!-- "Add to Home Screen" opens the game full screen, like the app -->
+    <link rel="manifest" href="/manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="MundoFlag">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="theme-color" content="#E8F9F4">
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="MundoFlag">
     <meta property="og:title" content="MundoFlag - geography games">
@@ -16,7 +23,8 @@
     <meta property="og:image:height" content="630">
     <meta name="twitter:card" content="summary_large_image">
     <title>MundoFlag - Oops</title>
-    <link rel="stylesheet" href="/css/mobile.css?v=6">
+    <link rel="stylesheet" href="/css/fonts.css?v=1">
+    <link rel="stylesheet" href="/css/mobile.css?v=7">
 <style>
     body {
         margin: 0;
@@ -71,6 +79,7 @@
             <button class="error-back" type="button" onclick="history.length > 1 ? history.back() : (location.href = '/')">← Back</button>
         </div>
     </div>
-<script src="/js/bg-music.js?v=2"></script>
+<script src="/js/bg-music.js?v=3"></script>
+<script src="/js/mobile.js?v=2"></script>
 </body>
 </html>

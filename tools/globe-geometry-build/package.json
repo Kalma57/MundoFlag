@@ -4,9 +4,7 @@
   "version": "1.0.0",
   "description": "Offline build pipeline: precomputes the 3D polygon geometry for every country (so the browser never has to triangulate 241 countries live), and bundles a patched local copy of three-globe that consumes the precomputed data. Not part of the Maven/Spring build — run manually with `npm install && npm run build` whenever countries-50m.json or the three-globe version changes.",
   "scripts": {
-    "build": "node precompute-geometry.js && node build-three-globe-bundle.js",
-    "bundle-three-globe": "esbuild node_modules/three-globe/dist/three-globe.mjs --bundle --format=esm --minify --target=es2019 --external:three --external:'three/*' --external:three-conic-polygon-geometry --outfile=../../src/main/resources/static/js/three-globe-2.41.11.min.js",
-    "bundle-conic-polygon": "esbuild node_modules/three-conic-polygon-geometry/dist/three-conic-polygon-geometry.mjs --bundle --format=esm --minify --target=es2019 --external:three --outfile=../../src/main/resources/static/js/three-conic-polygon-geometry-2.1.3.min.js"
+    "build": "node precompute-geometry.js && node build-three-globe-bundle.js"
   },
   "devDependencies": {
     "esbuild": "0.28.2",
