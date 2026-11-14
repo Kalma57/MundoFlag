@@ -3,7 +3,7 @@
   "appName": "MundoFlag",
   "webDir": "www",
   "server": {
-    "url": "https://mundoflag.com",
+    "url": "https://mundoflag.onrender.com",
     "errorPath": "offline.html",
     "androidScheme": "https"
   },
