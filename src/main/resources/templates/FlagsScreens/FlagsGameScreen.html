@@ -135,11 +135,20 @@
             box-shadow: var(--shadow-md);
         }
 
-        /* Difficulty badge — fixed top-left, mirrors the rules button on the right */
-        .difficulty-badge {
+        /* Top badges and buttons — same layout as the Flags Match screens: the difficulty badge
+           pinned top-left and Rules pinned top-right on desktop; on phones mobile.css turns both
+           into centered rows above the heading, so Rules stays at the top of the page. */
+        .badge-stack {
             position: fixed;
             top: 40px;
             left: 40px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 5;
+        }
+
+        .badge {
             display: flex;
             align-items: center;
             gap: 8px;
@@ -156,27 +165,40 @@
             50%      { box-shadow: var(--shadow-md); }
         }
 
-        .difficulty-badge.easy {
+        .badge.easy {
             background: linear-gradient(135deg, #e3f2fd, #ffffff);
             color: #1565c0;
             border: 2px solid #42a5f5;
         }
 
-        .difficulty-badge.hard {
+        .badge.hard {
             background: linear-gradient(135deg, #fdeaea, #ffffff);
             color: #c62828;
             border: 2px solid #ef5350;
         }
 
-        /* Rules button — fixed top-right */
-        .rules-btn {
+        .top-right-actions {
             position: fixed;
             top: 40px;
             right: 40px;
+            display: flex;
+            gap: 14px;
+            z-index: 5;
+        }
+
+        .rules-btn {
             background: white;
             color: #4CAF50;
             border: 2px solid #4CAF50;
             box-shadow: var(--shadow-sm);
+        }
+
+        /* Game data under the heading, like the Match screens' scoreboard */
+        .game-status {
+            margin: 0 0 18px;
+            font-size: var(--font-base);
+            font-weight: 700;
+            color: #555;
         }
 
         .rules-btn:hover {
@@ -302,18 +324,25 @@
             color: #4CAF50;
         }
     </style>
-    <link rel="stylesheet" href="/css/mobile.css?v=3">
+    <link rel="stylesheet" href="/css/mobile.css?v=5">
 </head>
 
 <body>
 
+<!-- Shows the difficulty this game round is locked to (set on the Start screen) -->
+<div class="badge-stack">
+    <div class="badge" th:classappend="${difficulty.name() eq 'EASY'} ? 'easy' : 'hard'">
+        <span th:text="${difficulty.name() eq 'EASY'} ? '🟢 EASY MODE' : '🔴 HARD MODE'">HARD MODE</span>
+    </div>
+</div>
+
+<div class="top-right-actions">
+    <button class="rules-btn" onclick="openRules()">RULES</button>
+</div>
+
 <h1>Flags</h1>
 
-<!-- Shows the difficulty this game round is locked to (set on the Start screen) -->
-<div class="difficulty-badge"
-     th:classappend="${difficulty.name() eq 'EASY'} ? 'easy' : 'hard'">
-    <span th:text="${difficulty.name() eq 'EASY'} ? '🟢 EASY MODE' : '🔴 HARD MODE'">HARD MODE</span>
-</div>
+<div class="game-status">Guesses: <span id="guessCount" th:text="${guesses != null ? #lists.size(guesses) : 0}">0</span></div>
 
 <!--
     FIX: gameId is embedded as a hidden field in every form.
@@ -351,8 +380,6 @@
     <button type="submit" class="giveup-btn">GIVE UP</button>
 
 </form>
-
-<button class="rules-btn" onclick="openRules()">RULES</button>
 
 <!-- Guesses list — populated by Thymeleaf -->
 <div class="guess-error" id="guessError" role="alert" hidden></div>
@@ -470,6 +497,7 @@
 
             row.append(guessedBox, resultBox);
             list.appendChild(row);
+            document.getElementById('guessCount').textContent = list.children.length;
         }
 
         form.addEventListener('submit', async function (e) {

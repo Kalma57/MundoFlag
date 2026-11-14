@@ -226,6 +226,40 @@
         height: min(92vw, 440px) !important;
     }
 
+    /* ---------- Flags guesses: guessed flag and result side by side ----------
+       On desktop each flag is a fixed 300x225 (4:3) frame. On a phone two of those don't fit:
+       the frame used to get narrower while keeping its height, so the flag was cut at the sides.
+       Here each flag takes half the row and keeps the same 4:3 frame, just smaller. (Every flag
+       image is a 400x400 square with the flag in a 4:3 band in the middle, so a 4:3 frame with
+       object-fit: cover shows exactly the whole flag, like on desktop.) Side by side keeps the
+       two easy to compare, which is the whole point of the game. Only flag rows have .flag
+       children, so the Globe guess lists are not affected. */
+    .guess-row:has(> .flag) {
+        gap: 12px !important;
+        padding: 12px !important;
+        align-items: flex-end !important;
+    }
+
+    .guess-row > .flag {
+        flex: 1 1 0 !important;
+        min-width: 0 !important;
+    }
+
+    .guess-row > .flag img {
+        width: 100% !important;
+        height: auto !important;
+        aspect-ratio: 4 / 3;
+        object-fit: cover !important;
+        border-radius: 8px !important;
+    }
+
+    .guess-row > .flag .guess-label {
+        font-size: 14px !important;
+        margin-bottom: 6px !important;
+        text-align: center;
+        overflow-wrap: anywhere;
+    }
+
     /* ---------- Anything image-like never wider than the screen ---------- */
     img, video {
         max-width: 100%;
