@@ -15,7 +15,9 @@
     let muted = read(localStorage, MUTED_KEY) === '1';
 
     const audio = new Audio();
-    audio.preload = 'auto';
+    // Nothing is downloaded until the music is actually about to play (the first tap on a page),
+    // so the 2 MB song never competes with the game itself while a page is loading on a phone.
+    audio.preload = 'none';
     audio.volume = VOLUME;
 
     function load(index, startAt) {
@@ -27,11 +29,13 @@
     }
 
     function save() {
-        write(sessionStorage, STATE_KEY, JSON.stringify({ track: state.track, time: audio.currentTime || 0 }));
+        const time = audio.src ? (audio.currentTime || 0) : state.time;
+        write(sessionStorage, STATE_KEY, JSON.stringify({ track: state.track, time: time }));
     }
 
     function tryPlay() {
         if (muted) return;
+        if (!audio.src) load(state.track, state.time);
         audio.play().catch(() => { /* blocked until the first click/key - see unlock below */ });
     }
 
@@ -72,7 +76,8 @@
         document.body.appendChild(btn);
     }
 
-    load(state.track, state.time);
-    tryPlay(); // works right away if the browser already allows sound on this site
+    // Music already playing on the previous page of this tab: carry on right away (the song is
+    // already in the browser's cache by then). A first visit waits for the first tap instead.
+    if (state.time > 0) tryPlay();
     if (document.body) buildButton(); else document.addEventListener('DOMContentLoaded', buildButton);
 })();

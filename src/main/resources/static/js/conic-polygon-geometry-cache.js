@@ -1,6 +1,6 @@
 // Drop-in replacement for the 'three-conic-polygon-geometry' package, resolved
 // via the page's import map. three-globe imports this bare specifier itself
-// (marked external in its esm.sh URL) to build each country's cap+side mesh.
+// (left external when it is bundled) to build each country's cap+side mesh.
 //
 // WHY: live-triangulating all ~241 countries takes ~7.5s of blocking
 // main-thread work on every page load (see tools/globe-geometry-build). This
@@ -17,7 +17,9 @@
 // (the same function precompute-geometry.js uses to build the manifest keys).
 
 import * as THREE from 'three';
-import RealConicPolygonGeometry from 'https://esm.sh/three-conic-polygon-geometry@2.1.3?external=three';
+// Served from this site (bundled with three left external - see the bundle-conic-polygon script in
+// tools/globe-geometry-build/package.json) rather than from a third-party CDN.
+import RealConicPolygonGeometry from '/js/three-conic-polygon-geometry-2.1.3.min.js';
 
 function hashCoords(jsonStr) {
   let h1 = 0x811c9dc5;
