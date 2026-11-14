@@ -535,7 +535,7 @@
     .match-columns:has(#globeContainer) > .opponent-column {
         display: contents !important;
     }
-    .match-columns:has(#globeContainer) > .opponent-column > .column-title { order: -2; }
+    .match-columns:has(#globeContainer) > .opponent-column > .column-title { order: -2; align-self: center; text-align: center; }
     .match-columns:has(#globeContainer) > .opponent-column > .opponent-panel { order: -1; margin-bottom: 4px !important; }
     .match-columns:has(#globeContainer) > .opponent-column > .guesses { order: 5; }
 
@@ -547,21 +547,21 @@
     .match-columns:has(#globeContainer) > .your-column > .column-title {
         display: none !important;               /* "🙋 You" - the opponent line above says who's who */
     }
-    body:has(#globeContainer) .guess-form {
+    .match-columns:has(#globeContainer) .guess-form {
         flex-wrap: nowrap !important;
     }
-    body:has(#globeContainer) .guess-form input[type="text"] {
+    .match-columns:has(#globeContainer) .guess-form input[type="text"] {
         flex: 1 1 auto !important;
         width: auto !important;
     }
-    body:has(#globeContainer) .guess-form button {
+    .match-columns:has(#globeContainer) .guess-form button {
         flex: none !important;
         padding: 0 18px !important;
     }
-    body:has(#globeContainer) .controls-row {
+    .match-columns:has(#globeContainer) .controls-row {
         gap: 8px !important;
     }
-    body:has(#globeContainer) .proximity-banner {
+    .match-columns:has(#globeContainer) .proximity-banner {
         padding: 8px 12px !important;
         font-size: 15px !important;
         margin: 6px 0 !important;
