@@ -226,6 +226,8 @@ public class CapitalGlobeBlitzController {
                 history.add(rowData);
             }
             data.put("questionHistory", history);
+            // What this player was still on when the clock ran out, so the end screen can show it
+            data.put("timedOutOn", com.example.flagdemo.View.BlitzTimedOut.payload(engine::getCurrentHumanTarget));
         }
 
         if (lastGuess != null) {

@@ -214,7 +214,7 @@
         .rules-panel p { margin: 10px 0; color: #333; }
         .close-rules { position: absolute; top: 15px; right: 25px; font-size: 32px; cursor: pointer; color: var(--pink-dark); }
     </style>
-    <link rel="stylesheet" href="/css/mobile.css?v=7">
+    <link rel="stylesheet" href="/css/mobile.css?v=11">
 </head>
 
 <body th:attr="data-room-code=${roomCode},data-player-token=${playerToken}">
@@ -552,6 +552,7 @@
         }
         matchOverlaySub.textContent = 'Final score: ' + data.humanScore + ' - ' + data.aiScore;
         renderMatchRecap(data.questionHistory);
+        window.MundoBlitzTimedOut(matchRecap, data.timedOutOn, 'capital-country');
         matchOverlay.classList.add('active');
         if (data.matchWinner === 'HUMAN') launchConfetti();
     }
@@ -670,6 +671,7 @@
 </script>
 
 <script src="/js/game-expired.js?v=1"></script>
+<script src="/js/blitz-end.js?v=1"></script>
 <script src="/js/bg-music.js?v=3"></script>
 <script src="/js/mobile.js?v=2"></script>
 </body>

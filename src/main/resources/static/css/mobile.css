@@ -147,9 +147,12 @@
 
 @media (max-width: 700px) {
 
-    /* Decorative glows sit partly off-screen on purpose; never let them widen the page */
+    /* Decorative glows sit partly off-screen on purpose; never let them widen the page.
+       "clip" (where supported) does that without turning the page into its own scroll box,
+       which would stop position: sticky from working; "hidden" stays as the fallback. */
     html, body {
         overflow-x: hidden !important;
+        overflow-x: clip !important;
         max-width: 100%;
     }
 
@@ -425,6 +428,193 @@
 
     .end-screen-modal h2 {
         font-size: 24px !important;
+    }
+
+    /* ---------- (1) Rules drawer: no shadow while it's closed ----------
+       Closed, the drawer sits just off the right edge (translateX(100%)) but its box-shadow still
+       spilled back onto the screen as a grey strip down the right side. */
+    .rules-panel:not(.open) {
+        box-shadow: none !important;
+    }
+
+    /* ---------- (2) Music button: at the end of the page, not floating over the game ----------
+       Pinned to the corner it covered guess rows, answers and card bottoms while scrolling. */
+    #bg-music-toggle {
+        position: static !important;
+        display: block !important;
+        margin: 28px auto 0 !important;
+    }
+
+    /* ---------- (3) "Waiting for opponent" box fits the screen ---------- */
+    .waiting-panel {
+        width: 100% !important;
+        max-width: 100% !important;
+        padding: 26px 16px !important;
+        box-sizing: border-box;
+    }
+    .room-code-display {
+        font-size: clamp(30px, 11vw, 44px) !important;
+        letter-spacing: 6px !important;
+        padding: 8px 14px !important;
+        max-width: 100%;
+        box-sizing: border-box;
+    }
+
+    /* ---------- (5) End box always scrolls, so HOME / PLAY AGAIN can always be reached ---------- */
+    .overlay-backdrop {
+        padding: 12px 0;
+        box-sizing: border-box;
+    }
+    .overlay-panel {
+        max-height: calc(100dvh - 24px) !important;
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    /* ---------- (10) Form controls use the site's font, not the system one ----------
+       (inputs and buttons don't inherit the page font by default; any page rule that sets its
+       own font still wins - this only replaces the browser default) */
+    input, button, select, textarea {
+        font-family: inherit;
+    }
+
+    /* ---------- (7) Globe card: the globe fills the whole card ----------
+       The "neighbor" notification bar took a fixed 70px strip at the top of every globe card,
+       almost always empty. Here it floats over the top of the globe instead of taking room. */
+    #notificationArea {
+        position: absolute !important;
+        top: 6px;
+        left: 0;
+        right: 0;
+        height: auto !important;
+        background: transparent !important;
+        pointer-events: none;
+    }
+
+    /* ---------- (4) Opponent: a compact line instead of a big card ----------
+       (every vs computer / vs friend screen; on Globe and Capital Locations it also moves up to
+       right under the scoreboard, above the guess box - it used to sit below the globe) */
+    .opponent-panel {
+        display: flex !important;
+        flex-direction: row !important;
+        flex-wrap: wrap !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 4px 12px !important;
+        padding: 8px 12px !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box;
+        border-radius: 14px !important;
+        min-height: 0 !important;
+    }
+    .opponent-panel > * {
+        margin: 0 !important;
+        font-size: 15px !important;
+    }
+    .opponent-panel .opponent-percent, .opponent-panel .opponent-score {
+        font-size: 22px !important;
+        line-height: 1 !important;
+    }
+    .opponent-panel .opponent-percent-label, .opponent-panel .opponent-score-label {
+        font-size: 12px !important;
+    }
+    .opponent-panel .progress-track {
+        flex: 1 1 100% !important;
+        height: 6px !important;
+    }
+    .opponent-panel .opponent-badge {
+        padding: 4px 10px !important;
+    }
+    .opponent-column > .column-title {
+        font-size: 15px !important;
+        margin: 0 0 4px !important;
+    }
+
+    /* Globe and Capital Locations: opponent line first, the guess list (Globe) last */
+    .match-columns:has(#globeContainer) > .opponent-column {
+        display: contents !important;
+    }
+    .match-columns:has(#globeContainer) > .opponent-column > .column-title { order: -2; align-self: center; text-align: center; }
+    .match-columns:has(#globeContainer) > .opponent-column > .opponent-panel { order: -1; margin-bottom: 4px !important; }
+    .match-columns:has(#globeContainer) > .opponent-column > .guesses { order: 5; }
+
+    /* ---------- (9) Globe matches: guess box and globe on one screen ---------- */
+    body:has(#globeContainer):has(> .badge-stack) h1 {
+        font-size: 26px !important;
+        margin-bottom: 2px !important;
+    }
+    .match-columns:has(#globeContainer) > .your-column > .column-title {
+        display: none !important;               /* "🙋 You" - the opponent line above says who's who */
+    }
+    .match-columns:has(#globeContainer) .guess-form {
+        flex-wrap: nowrap !important;
+    }
+    .match-columns:has(#globeContainer) .guess-form input[type="text"] {
+        flex: 1 1 auto !important;
+        width: auto !important;
+    }
+    .match-columns:has(#globeContainer) .guess-form button {
+        flex: none !important;
+        padding: 0 18px !important;
+    }
+    .match-columns:has(#globeContainer) .controls-row {
+        gap: 8px !important;
+    }
+    .match-columns:has(#globeContainer) .proximity-banner {
+        padding: 8px 12px !important;
+        font-size: 15px !important;
+        margin: 6px 0 !important;
+    }
+
+    /* ---------- (11) Capital Locations: Confirm stays in reach while looking at the globe ----------
+       The globe runs below the bottom of the screen; picking a country low on it meant scrolling
+       back up to Confirm. The pick/Confirm bar now sticks to the top of the screen while the
+       globe scrolls under it. */
+    body:has(#promptCapital) #guessSection {
+        position: sticky !important;
+        top: 0;
+        z-index: 20;
+        padding: 8px 0 !important;
+        background: rgba(255, 255, 255, 0.94);
+        border-radius: 0 0 14px 14px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    }
+
+    /* ---------- Daily Quiz ---------- */
+    /* (13) timer, Pause and Home stay at the top of the screen through every stage */
+    body:has(#stage1) .timer-badge, body:has(#stage1) .top-right-controls {
+        position: fixed !important;
+        z-index: 60;
+    }
+    body:has(#stage1) .timer-badge, body:has(#stage1) .top-right-controls > * {
+        background: rgba(255, 255, 255, 0.95) !important;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.12);
+    }
+    /* (15) the "why this country" card: less padding, smaller text */
+    .stage4-card {
+        padding: 22px 16px !important;
+    }
+    .stage4-card h2 {
+        font-size: 22px !important;
+        margin-bottom: 12px !important;
+    }
+    .stage4-card p {
+        font-size: 17px !important;
+        line-height: 1.6 !important;
+    }
+    /* (14) a way home at the very end of the quiz */
+    .stage4-home {
+        display: block !important;
+        width: fit-content;
+        margin: 22px auto 0;
+        font-size: 17px !important;
+        padding: 12px 24px !important;
+    }
+    /* (16) the guess box text fits ("Enter country name" was cut at 28px) */
+    body:has(#stage1) input[type="text"] {
+        font-size: 18px !important;
+        padding: 14px !important;
     }
 
     /* ---------- Anything image-like never wider than the screen ---------- */

@@ -395,7 +395,7 @@
     }
 
   </style>
-    <link rel="stylesheet" href="/css/mobile.css?v=7">
+    <link rel="stylesheet" href="/css/mobile.css?v=11">
 </head>
 
 <body>
@@ -435,7 +435,7 @@
          changing difficulty requires going back to the Flags lobby instead -->
     <form th:action="@{/Flags/start}" method="get">
       <input type="hidden" name="difficulty" th:value="${difficulty.name()}">
-      <button type="submit" autofocus>Play Again</button>
+      <button type="submit" id="playAgainBtn">Play Again</button>
     </form>
 
     <button type="button"
@@ -517,6 +517,11 @@
   launchConfetti();
 </script>
 
+<script>
+    // Focus Play Again (so Enter starts a new game) without scrolling to it: "autofocus" made a
+    // phone jump down to the button and hide "Game Over" and the answer at the top.
+    document.getElementById('playAgainBtn').focus({ preventScroll: true });
+</script>
 <script src="/js/bg-music.js?v=3"></script>
 <script src="/js/mobile.js?v=2"></script>
 </body>
