@@ -224,10 +224,13 @@ public class CapitalBlitzController {
                         : (aiQ != null ? aiQ.getPromptText() : null);
                 String targetFlagPath = humanQ != null ? humanQ.getTargetFlagPath()
                         : (aiQ != null ? aiQ.getTargetFlagPath() : null);
+                String correctAnswerText = humanQ != null ? humanQ.getCorrectAnswerText()
+                        : (aiQ != null ? aiQ.getCorrectAnswerText() : null);
 
                 Map<String, Object> rowData = new HashMap<>();
                 rowData.put("order", i + 1);
                 rowData.put("promptText", promptText);
+                rowData.put("correctAnswerText", correctAnswerText);
                 rowData.put("targetFlagPath", targetFlagPath);
                 rowData.put("humanAnswered", humanQ != null);
                 if (humanQ != null) {

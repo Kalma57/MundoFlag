@@ -225,6 +225,8 @@
         .prompt-flag {
             height: clamp(80px, 18vh, 200px);
             width: auto;
+            aspect-ratio: 4 / 3;     /* flag images are squares with the flag in a 4:3 band */
+            object-fit: cover;
             max-width: 58vw;
             border-radius: 12px;
             box-shadow: var(--shadow-md);
@@ -504,7 +506,7 @@
             color: #7c4dff;
         }
     </style>
-    <link rel="stylesheet" href="/css/mobile.css?v=5">
+    <link rel="stylesheet" href="/css/mobile.css?v=6">
 </head>
 
 <body th:attr="data-match-id=${matchId}, data-mode=${mode}">

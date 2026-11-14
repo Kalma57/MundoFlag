@@ -201,7 +201,7 @@
         .reveal-result.fail { color: #c62828; }
         .reveal-country-label { font-size: 16px; color: #888; text-transform: uppercase; letter-spacing: 1.5px; font-weight: 700; margin-top: 10px; }
         .reveal-country-name { font-size: 42px; font-weight: 800; color: #ad6118; }
-        .reveal-flag { width: 175px; border-radius: 12px; box-shadow: var(--shadow-md); margin-top: 10px; border: 3px solid rgba(230,126,34,0.25); }
+        .reveal-flag { width: 175px; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 12px; box-shadow: var(--shadow-md); margin-top: 10px; border: 3px solid rgba(230,126,34,0.25); }
         .stage2-complete-names { font-size: 26px; font-weight: 700; color: #ad6118; margin-top: 6px; }
 
         .stage-label-small { font-size: 19px; font-weight: 800; color: #ad6118; letter-spacing: 2px; margin-bottom: 6px; }
@@ -250,7 +250,7 @@
         .stage4-card p { font-size: 25px; line-height: 1.8; color: #333; }
         .daily-quiz-done { margin-top: 28px; font-size: 27px; font-weight: 700; color: #888; text-align: center; }
     </style>
-    <link rel="stylesheet" href="/css/mobile.css?v=5">
+    <link rel="stylesheet" href="/css/mobile.css?v=6">
 </head>
 
 <body th:attr="data-gameid=${gameId}">

@@ -567,6 +567,12 @@
     #end-screen-country { margin-bottom: 15px; }
 
     #end-screen-flag {
+
+      /* Flag images are squares with the flag in a 4:3 band - a 4:3 frame shows just the flag */
+
+      aspect-ratio: 4 / 3;
+
+      object-fit: cover;
       width: 160px;
       border-radius: 12px;
       display: block;
@@ -736,7 +742,7 @@
       flex-shrink: 0;
     }
   </style>
-    <link rel="stylesheet" href="/css/mobile.css?v=5">
+    <link rel="stylesheet" href="/css/mobile.css?v=6">
 </head>
 <body>
 
