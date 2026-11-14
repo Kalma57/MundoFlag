@@ -4,6 +4,7 @@ import com.example.flagdemo.BusinessLayer.CountryBL;
 
 import java.nio.file.Paths;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import org.springframework.stereotype.Service;
@@ -54,16 +55,16 @@ public class CountryController implements java.io.Serializable {
         if (allCountriesCache != null) return;
         synchronized (this) {
             if (allCountriesCache != null) return;
-            Map<String, CountryBL> byName = new HashMap<>();
+            Map<String, CountryBL> byDbName = new LinkedHashMap<>();
             Map<Integer, CountryBL> byId = new HashMap<>();
             for (CountryDAL d : cr.getAllCountries()) {
                 CountryBL c = new CountryBL(
                         d.getCountryName(), d.getID(), fixImagePath(d.getFlagPath()),
                         d.getLatitude(), d.getLongitude(), d.getNeighborsList(), d.getIso3(), d.getCapital());
-                byName.put(d.getCountryName().toLowerCase(), c);
+                byDbName.put(d.getCountryName(), c);
                 byId.putIfAbsent(d.getID(), c);
             }
-            byNameCache = byName;
+            byNameCache = CountryNameAliases.buildLookup(byDbName);
             byIdCache = byId;
             allCountriesCache = cr.getAllCountries().stream().map(CountryBL::new).toList();
         }
@@ -78,12 +79,14 @@ public class CountryController implements java.io.Serializable {
     }
 
     /**
-     * Retrieves a country using its name (case-insensitive).
+     * Retrieves a country by any name a player may type for it - the exact DB name, or any
+     * spelling/alias of it (case, accents, punctuation, "St"/"Saint", "&"/"and", "Ivory Coast",
+     * "Turkiye", "USA"...). See {@link CountryNameAliases}. Returns null for an unknown name.
      */
     public CountryBL getCountryByName(String countryName) {
         if (countryName == null) return null;
         ensureCaches();
-        return byNameCache.get(countryName.toLowerCase());
+        return byNameCache.get(CountryNameAliases.normalize(countryName));
     }
 
     public List<CountryBL> getAllCountries() {

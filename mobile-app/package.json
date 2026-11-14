@@ -1,0 +1,24 @@
+{
+  "name": "mundoflag-app",
+  "version": "1.0.0",
+  "private": true,
+  "description": "MundoFlag for the App Store and Google Play - a Capacitor shell around the live mundoflag site",
+  "scripts": {
+    "sync": "cap sync",
+    "icons": "capacitor-assets generate --iconBackgroundColor '#2BB3A3' --iconBackgroundColorDark '#1F8C80' --splashBackgroundColor '#E8F9F4' --splashBackgroundColorDark '#122826'",
+    "android": "cap open android",
+    "ios": "cap open ios"
+  },
+  "dependencies": {
+    "@capacitor/android": "8.6.0",
+    "@capacitor/app": "8.1.2",
+    "@capacitor/core": "8.6.0",
+    "@capacitor/ios": "8.6.0",
+    "@capacitor/share": "8.0.3",
+    "@capacitor/splash-screen": "8.0.2"
+  },
+  "devDependencies": {
+    "@capacitor/assets": "4.0.0",
+    "@capacitor/cli": "8.6.0"
+  }
+}

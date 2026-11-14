@@ -2,11 +2,18 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="description" content="Free geography games: guess countries by their flags, find them on a 3D globe, match capital cities, and take a new daily quiz. Play solo, against the computer, or 1v1 with a friend.">
     <link rel="icon" href="/favicon.svg" type="image/svg+xml">
     <link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png">
     <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    <!-- "Add to Home Screen" opens the game full screen, like the app -->
+    <link rel="manifest" href="/manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="MundoFlag">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="theme-color" content="#E8F9F4">
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="MundoFlag">
     <meta property="og:title" content="MundoFlag - geography games">
@@ -17,16 +24,14 @@
     <meta name="twitter:card" content="summary_large_image">
     <title th:text="'Globe - ' + ${durationMinutes} + ' Minute' + (${durationMinutes} > 1 ? 's' : '') + ' Blitz'">Globe - 1 Minute Blitz</title>
 
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/fonts.css?v=1">
 
     <script type="importmap">
         { "imports": {
             "three": "/three/three.module.js?v=2",
             "three/": "/three/",
-            "three-globe": "https://esm.sh/three-globe@2.41.11?external=three,three-conic-polygon-geometry&bundle",
-            "three-conic-polygon-geometry": "/js/conic-polygon-geometry-cache.js?v=1"
+            "three-globe": "/js/three-globe.bundle.js?v=1",
+            "three-conic-polygon-geometry": "/js/three-globe.bundle.js?v=1"
         } }
     </script>
 
@@ -687,7 +692,7 @@
             color: #ff7043;
         }
     </style>
-    <link rel="stylesheet" href="/css/mobile.css?v=3">
+    <link rel="stylesheet" href="/css/mobile.css?v=5">
 </head>
 
 <body th:attr="data-match-id=${matchId}">
@@ -836,7 +841,7 @@
 <script src="/js/topojson-client.min.js?v=2"></script>
 
 <script type="module" th:inline="none">
-    import { initGlobe, colorCountry, focusOnCountry, resetGlobeColors, resetCamera } from '/js/globe.js?v=2057';
+    import { initGlobe, colorCountry, focusOnCountry, resetGlobeColors, resetCamera } from '/js/globe.js?v=2059';
 
     let MATCH_ID = document.body.getAttribute('data-match-id'); // replaced in place by Play Again
 
@@ -1325,6 +1330,7 @@
     startPolling();
 </script>
 
-<script src="/js/bg-music.js?v=1"></script>
+<script src="/js/bg-music.js?v=2"></script>
+<script src="/js/mobile.js?v=2"></script>
 </body>
 </html>

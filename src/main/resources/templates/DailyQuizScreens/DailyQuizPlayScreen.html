@@ -2,11 +2,18 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="description" content="Free geography games: guess countries by their flags, find them on a 3D globe, match capital cities, and take a new daily quiz. Play solo, against the computer, or 1v1 with a friend.">
     <link rel="icon" href="/favicon.svg" type="image/svg+xml">
     <link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png">
     <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    <!-- "Add to Home Screen" opens the game full screen, like the app -->
+    <link rel="manifest" href="/manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="MundoFlag">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="theme-color" content="#E8F9F4">
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="MundoFlag">
     <meta property="og:title" content="MundoFlag - geography games">
@@ -21,14 +28,12 @@
         { "imports": {
             "three": "/three/three.module.js?v=2",
             "three/": "/three/",
-            "three-globe": "https://esm.sh/three-globe@2.41.11?external=three,three-conic-polygon-geometry&bundle",
-            "three-conic-polygon-geometry": "/js/conic-polygon-geometry-cache.js?v=1"
+            "three-globe": "/js/three-globe.bundle.js?v=1",
+            "three-conic-polygon-geometry": "/js/three-globe.bundle.js?v=1"
         } }
     </script>
 
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/fonts.css?v=1">
 
     <style>
         :root {
@@ -123,6 +128,8 @@
 
         button { padding: 16px 34px; font-size: 24px; border-radius: 12px; cursor: pointer; border: none; transition: 0.3s; }
         button:disabled { opacity: 0.6; cursor: not-allowed; }
+        .share-btn { margin: -8px auto 26px; display: block; }
+        .share-btn[hidden] { display: none; }
 
         .guess-btn { background: linear-gradient(135deg, var(--orange), var(--orange-dark)); color: white; box-shadow: 0 8px 18px rgba(0,0,0,0.25); }
         .guess-btn:hover:not(:disabled) { transform: translateY(-3px) scale(1.05); box-shadow: 0 12px 22px rgba(0,0,0,0.35); }
@@ -238,7 +245,7 @@
         .stage4-card p { font-size: 25px; line-height: 1.8; color: #333; }
         .daily-quiz-done { margin-top: 28px; font-size: 27px; font-weight: 700; color: #888; text-align: center; }
     </style>
-    <link rel="stylesheet" href="/css/mobile.css?v=3">
+    <link rel="stylesheet" href="/css/mobile.css?v=5">
 </head>
 
 <body th:attr="data-gameid=${gameId}">
@@ -351,6 +358,9 @@
         </div>
     </div>
 
+    <!-- Share the result (no spoilers: shows how you did, never the country) -->
+    <button class="guess-btn share-btn" id="shareResultBtn" type="button" hidden>📤 Share my result</button>
+
     <div class="stage4-card">
         <div class="stage4-years-ago" id="stage4YearsAgo" hidden></div>
         <h2 id="stage4EventTitle"></h2>
@@ -393,7 +403,7 @@
 </script>
 
 <script type="module">
-    import { initGlobe, colorCountry, focusOnCountry } from '/js/globe.js?v=2057';
+    import { initGlobe, colorCountry, focusOnCountry } from '/js/globe.js?v=2059';
 
     let globeReady = false;
     let globeInitStarted = false;
@@ -741,6 +751,40 @@
         setTimeout(() => revealStage4(data), 900);
     }
 
+    // ----------------------------------------------------------- Share
+
+    /**
+     * The result as a few lines of text + emoji, Wordle-style: how each stage went and the time,
+     * never the country itself - so sharing it doesn't spoil today's quiz for anyone.
+     */
+    function buildShareText(data) {
+        const guesses = document.querySelectorAll('#stage1Guesses .guess-row').length;
+        const found = document.getElementById('neighborFound').textContent;
+        const total = document.getElementById('neighborTotal').textContent;
+        const day = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+        const lines = [
+            'MundoFlag Daily Quiz · ' + day + ' 🌍',
+            '🏳️ Country: ' + (stage1Success ? '✅ ' + guesses + (guesses === 1 ? ' guess' : ' guesses') : '❌'),
+            '🗺️ ' + (stage2UsedFallback ? 'Closest: ' : 'Neighbors: ') + (stage2Success ? '✅ ' : '❌ ') + found + '/' + total,
+            '🏛️ Capital: ' + (data.stage3Success ? '✅' : '❌'),
+        ];
+        if (data.dailyQuizFinalTime) lines.push('⏱️ ' + data.dailyQuizFinalTime);
+        lines.push('', 'Can you beat me? ' + location.origin + '/DailyQuiz/start');
+        return lines.join('\n');
+    }
+
+    function showShareButton(data) {
+        const text = buildShareText(data);
+        // remembered on this device for the rest of the day, so the "already played" page can share it too
+        try { localStorage.setItem('mundoflag.daily.result', JSON.stringify({ day: new Date().toISOString().slice(0, 10), text })); } catch (e) { /* no storage */ }
+        const btn = document.getElementById('shareResultBtn');
+        btn.hidden = false;
+        btn.onclick = async () => {
+            const how = await window.MundoFlag.share(text);
+            if (how !== 'cancelled') window.MundoFlag.countEvent('daily-share');
+        };
+    }
+
     // ----------------------------------------------------------- Stage 4
 
     function revealStage4(data) {
@@ -769,6 +813,8 @@
         } else {
             yearsAgoEl.hidden = true;
         }
+
+        showShareButton(data);
 
         const stage4 = document.getElementById('stage4');
         stage4.hidden = false;
@@ -810,6 +856,7 @@
     }
 </script>
 
-<script src="/js/bg-music.js?v=1"></script>
+<script src="/js/bg-music.js?v=2"></script>
+<script src="/js/mobile.js?v=2"></script>
 </body>
 </html>

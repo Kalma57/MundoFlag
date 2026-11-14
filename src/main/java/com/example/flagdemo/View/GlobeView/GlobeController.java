@@ -94,7 +94,7 @@ public class GlobeController {
 
     @RequestMapping(value = "/guess/ajax", method = {RequestMethod.POST, RequestMethod.GET})
     @ResponseBody
-    public GuessResultGlobeBL guessAjax(
+    public Object guessAjax(
             @RequestParam("countryName") String countryName,
             @RequestParam("gameId") String gameId,
             HttpSession session) {
@@ -105,7 +105,14 @@ public class GlobeController {
 
             if (viewModel == null) return null;
 
-            return viewModel.Guess(countryName);
+            // The name is checked here (not in the browser) so every alias/spelling of a country
+            // is accepted - an unknown name is rejected without costing an attempt.
+            CountryBL guessed = countryController.getCountryByName(countryName);
+            if (guessed == null || !isValidForGlobe(guessed)) {
+                return Map.of("error", "Please select a valid country from the list.");
+            }
+
+            return viewModel.Guess(guessed.getName());
         } catch (Exception e) {
             e.printStackTrace();
             return null;
