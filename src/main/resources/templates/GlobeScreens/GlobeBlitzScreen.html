@@ -702,7 +702,7 @@
             color: #ff7043;
         }
     </style>
-    <link rel="stylesheet" href="/css/mobile.css?v=7">
+    <link rel="stylesheet" href="/css/mobile.css?v=9">
 </head>
 
 <body th:attr="data-match-id=${matchId}">
@@ -1137,6 +1137,7 @@
         statAiGuesses.textContent = data.totalAiGuesses;
 
         renderBlitzRecap(data.flagHistory);
+        window.MundoBlitzTimedOut(matchRecap, data.timedOutOn, 'country');
         matchOverlay.classList.add('active');
     }
 
@@ -1341,6 +1342,7 @@
 </script>
 
 <script src="/js/game-expired.js?v=1"></script>
+<script src="/js/blitz-end.js?v=1"></script>
 <script src="/js/bg-music.js?v=3"></script>
 <script src="/js/mobile.js?v=2"></script>
 </body>

@@ -84,6 +84,7 @@
             box-shadow: var(--shadow-sm); cursor: pointer; text-decoration: none; display: inline-block;
         }
         .control-btn:hover { background: #fff4e0; }
+        .stage4-home { display: none; }
 
         #pauseOverlay {
             position: fixed; inset: 0; background: rgba(255,255,255,0.97); backdrop-filter: blur(6px);
@@ -255,7 +256,7 @@
         .stage4-card p { font-size: 25px; line-height: 1.8; color: #333; }
         .daily-quiz-done { margin-top: 28px; font-size: 27px; font-weight: 700; color: #888; text-align: center; }
     </style>
-    <link rel="stylesheet" href="/css/mobile.css?v=7">
+    <link rel="stylesheet" href="/css/mobile.css?v=9">
 </head>
 
 <body th:attr="data-gameid=${gameId}">
@@ -377,6 +378,8 @@
         <p id="stage4InfoText"></p>
     </div>
     <div class="daily-quiz-done">That's today's Daily Quiz — come back tomorrow for a new country.</div>
+    <!-- Phones only (see mobile.css): the page is long by now and the Home button at the top is far away -->
+    <a class="control-btn stage4-home" href="/">🏠 Back to home</a>
 </section>
 
 <!-- TopoJSON — must load before globe.js -->

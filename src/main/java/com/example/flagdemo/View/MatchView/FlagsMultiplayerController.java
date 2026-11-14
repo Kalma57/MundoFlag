@@ -626,6 +626,8 @@ public class FlagsMultiplayerController {
                 history.add(flagData);
             }
             data.put("flagHistory", history);
+            // What this player was still on when the clock ran out, so the end screen can show it
+            data.put("timedOutOn", com.example.flagdemo.View.BlitzTimedOut.payload(() -> engine.getCurrentTarget(mySlot)));
         }
 
         if (lastGuess != null) {
