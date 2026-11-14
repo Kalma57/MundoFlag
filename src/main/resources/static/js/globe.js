@@ -194,6 +194,11 @@ function fitDistance(canvas) {
     return Math.max(200, (100 * 1.12) / Math.sin(Math.min(vHalf, hHalf)));
 }
 
+/** Where the camera starts (and returns to on Play Again): desktop keeps its usual 200, phones fit the whole globe. */
+function startDistance(canvas) {
+    return canvas && canvas.clientWidth < 600 ? fitDistance(canvas) : 200;
+}
+
 export async function initGlobe() {
     const canvas = document.getElementById('globeCanvas');
     if (!canvas) return;
@@ -214,7 +219,7 @@ export async function initGlobe() {
 
     // Phones: the desktop camera distance (200) crops the top and bottom of the globe in a small,
     // squarer frame - start far enough back that the whole globe fits.
-    if (canvas.clientWidth < 600) camera.position.set(0, 0, fitDistance(canvas));
+    camera.position.set(0, 0, startDistance(canvas));
 
     // Keep the picture sharp and undistorted when the frame changes size (phone rotation,
     // window resize, the layout settling after fonts load) - it used to be sized only once.
@@ -525,7 +530,7 @@ export function focusOnCountry(lat, lon) {
 /** Puts the camera back at its starting distance/angle - used when a new game starts in place. */
 export function resetCamera() {
     if (!camera) return;
-    camera.position.set(0, 0, 200);
+    camera.position.set(0, 0, startDistance(renderer && renderer.domElement));
     camera.lookAt(0, 0, 0);
     if (controls) controls.update();
 }

@@ -76,8 +76,12 @@
         .info-card p { font-size: 21px; line-height: 1.7; color: #333; }
 
         .come-back { font-size: 19px; color: #888; font-weight: 700; }
+        .share-btn { margin: 0 auto 18px; padding: 14px 30px; font-size: 20px; font-weight: 800; border: none; border-radius: 12px;
+                     cursor: pointer; color: #fff; background: linear-gradient(135deg, var(--orange), var(--orange-dark));
+                     box-shadow: 0 8px 18px rgba(0,0,0,0.2); font-family: inherit; }
+        .share-btn[hidden] { display: none; }
     </style>
-    <link rel="stylesheet" href="/css/mobile.css?v=4">
+    <link rel="stylesheet" href="/css/mobile.css?v=5">
 </head>
 
 <body>
@@ -97,6 +101,9 @@
     </div>
 </div>
 
+<!-- Shown only if this device finished today's quiz (the play page saved the result text) -->
+<button class="share-btn" id="shareResultBtn" type="button" hidden>📤 Share my result</button>
+
 <div class="years-ago" th:if="${yearsAgo}" th:text="${yearsAgo} + (${yearsAgo} == 1 ? ' YEAR AGO TODAY' : ' YEARS AGO TODAY')">5 YEARS AGO TODAY</div>
 
 <div class="info-card" th:if="${eventTitle}">
@@ -105,6 +112,20 @@
 </div>
 
 <div class="come-back">Come back tomorrow for a new country.</div>
+
+<script>
+    (function () {
+        let saved = null;
+        try { saved = JSON.parse(localStorage.getItem('mundoflag.daily.result') || 'null'); } catch (e) { /* no storage */ }
+        if (!saved || saved.day !== new Date().toISOString().slice(0, 10)) return;
+        const btn = document.getElementById('shareResultBtn');
+        btn.hidden = false;
+        btn.addEventListener('click', async () => {
+            const how = await window.MundoFlag.share(saved.text);
+            if (how !== 'cancelled') window.MundoFlag.countEvent('daily-share');
+        });
+    })();
+</script>
 
 <script th:if="${countryName}" th:inline="javascript">
     // FlagPath from the DB is a raw filesystem-style path (e.g. /static/DB/FlagsImages/usa.png),
@@ -118,6 +139,6 @@
 </script>
 
 <script src="/js/bg-music.js?v=2"></script>
-<script src="/js/mobile.js?v=1"></script>
+<script src="/js/mobile.js?v=2"></script>
 </body>
 </html>

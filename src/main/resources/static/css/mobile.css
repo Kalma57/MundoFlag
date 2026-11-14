@@ -41,6 +41,25 @@
     white-space: nowrap;
 }
 
+/* ================= Small "Copied" message (window.MundoFlag.share in /js/mobile.js) ================= */
+.mf-toast {
+    position: fixed;
+    left: 50%;
+    bottom: calc(28px + env(safe-area-inset-bottom, 0px));
+    transform: translate(-50%, 20px);
+    z-index: 10001;
+    max-width: calc(100vw - 32px);
+    padding: 12px 18px;
+    border-radius: 999px;
+    background: rgba(33, 33, 33, 0.92);
+    color: #fff;
+    font: 700 15px 'Nunito', 'Segoe UI', sans-serif;
+    opacity: 0;
+    transition: opacity 0.25s, transform 0.25s;
+    pointer-events: none;
+}
+.mf-toast.show { opacity: 1; transform: translate(-50%, 0); }
+
 /* ================= Touch screens (phones, tablets, the app) ================= */
 @media (hover: none), (pointer: coarse) {
     html {

@@ -218,7 +218,77 @@
         }
     }
 
+    // ------------------------------------------------------------------ anonymous visit count
+
+    // Where this page is running: the store app, a home-screen shortcut, or a normal browser tab
+    function platform() {
+        const cap = window.Capacitor;
+        if (cap && cap.isNativePlatform && cap.isNativePlatform()) return 'app';
+        if (window.navigator.standalone || (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches)) return 'home';
+        return 'web';
+    }
+
+    // At most once a day per device, tell the server "a visit happened" - with only the platform and
+    // the days of this device's first and previous visit, which the device itself remembers. No ID is
+    // sent or stored, so the server can count visitors and returning visitors but can't tell who is who.
+    // (Server side: com.example.flagdemo.Stats. Explained on /privacy.)
+    function countVisit() {
+        const KEY = 'mundoflag.visits';
+        const today = new Date().toISOString().slice(0, 10);    // UTC day, same as the server's
+        let seen;
+        try { seen = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) { return; } // no storage: don't count (would double-count)
+        if (seen.last === today) return;
+        const body = new URLSearchParams({ p: platform(), first: seen.first || today, prev: seen.last || '' });
+        try { localStorage.setItem(KEY, JSON.stringify({ first: seen.first || today, last: today })); } catch (e) { return; }
+        if (navigator.sendBeacon) navigator.sendBeacon('/stats/visit', body);
+        else fetch('/stats/visit', { method: 'POST', body, keepalive: true }).catch(() => {});
+    }
+
+    function countEvent(name) {
+        const body = new URLSearchParams({ name });
+        if (navigator.sendBeacon) navigator.sendBeacon('/stats/event', body);
+        else fetch('/stats/event', { method: 'POST', body, keepalive: true }).catch(() => {});
+    }
+
+    // ------------------------------------------------------------------ sharing
+
+    function toast(text) {
+        const t = document.createElement('div');
+        t.className = 'mf-toast';
+        t.textContent = text;
+        document.body.appendChild(t);
+        setTimeout(() => t.classList.add('show'), 10);
+        setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 300); }, 2200);
+    }
+
+    // Opens the phone's share sheet (WhatsApp, Messages...) - the app's native one inside the app, the
+    // browser's where it has one - otherwise copies the text and says so.
+    async function share(text) {
+        const cap = window.Capacitor;
+        const NativeShare = cap && cap.isNativePlatform && cap.isNativePlatform() && cap.Plugins && cap.Plugins.Share;
+        try {
+            if (NativeShare) { await NativeShare.share({ text }); return 'shared'; }
+            if (navigator.share) { await navigator.share({ text }); return 'shared'; }
+        } catch (e) {
+            if (e && e.name === 'AbortError') return 'cancelled';     // closed the share sheet
+        }
+        try {
+            await navigator.clipboard.writeText(text);
+        } catch (e) {
+            const ta = document.createElement('textarea');            // older browsers / no permission
+            ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+            document.body.appendChild(ta); ta.select();
+            try { document.execCommand('copy'); } catch (e2) { /* nothing more we can do */ }
+            ta.remove();
+        }
+        toast('Copied - paste it anywhere to share');
+        return 'copied';
+    }
+
+    window.MundoFlag = { share, countEvent, platform };
+
     function init() {
+        countVisit();
         attachAll();
         // pages that build their guess box later (e.g. after a round starts) are picked up too
         new MutationObserver(attachAll).observe(document.body, { childList: true, subtree: true });

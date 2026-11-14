@@ -13,6 +13,11 @@ services:
       - SERVER_FORWARD_HEADERS_STRATEGY=framework
       # key that decrypts the weekly daily-quiz file, kept only in .env on the server
       - DAILY_QUIZ_KEY=${DAILY_QUIZ_KEY:-}
+      # password for the /stats dashboard (STATS_KEY in .env); empty = dashboard off
+      - MUNDOFLAG_STATS_KEY=${STATS_KEY:-}
+      - MUNDOFLAG_STATS_DIR=/app/stats
+    volumes:
+      - stats_data:/app/stats   # the anonymous visit/game counters survive restarts and redeploys
     expose:
       - "8080"
 
@@ -32,5 +37,6 @@ services:
       - app
 
 volumes:
+  stats_data:
   caddy_data:
   caddy_config:

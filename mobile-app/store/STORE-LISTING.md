@@ -47,7 +47,7 @@ No ads. No accounts. No tracking. Just geography.
 | Ads | No, my app does not contain ads |
 | Content rating | Category **Game**. Every question **No** (no violence, sexual content, bad language, drugs, gambling; users can't chat or share content; no location sharing; no purchases) → rated for everyone |
 | Target audience | **13 and over** (13–15, 16–17, 18+) |
-| Data safety | "Does your app collect or share any of the required user data types?" → **No** |
+| Data safety | **Yes, collects** → *App activity → App interactions* only. Not shared. Processed ephemerally: No. Required (can't be turned off). Purpose: **Analytics**. Encrypted in transit: **Yes**. Way to request deletion: **No** (counts are anonymous and can't be tied to a person). Everything else: not collected |
 | Government app / Financial features / Health / News | No / None / No / No |
 
 ## Releases
