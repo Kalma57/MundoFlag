@@ -84,7 +84,7 @@
             padding: clamp(12px, 2.2vh, 26px) clamp(16px, 2.4vw, 32px); background: rgba(255,255,255,0.85); backdrop-filter: blur(10px);
             border-radius: 20px; box-shadow: var(--shadow-md); flex-shrink: 0;
         }
-        .prompt-flag { height: clamp(80px, 18vh, 200px); width: auto; max-width: 58vw; border-radius: 12px; box-shadow: var(--shadow-md); border: 3px solid rgba(236,64,122,0.25); }
+        .prompt-flag { height: clamp(80px, 18vh, 200px); width: auto; aspect-ratio: 4 / 3; object-fit: cover; max-width: 58vw; border-radius: 12px; box-shadow: var(--shadow-md); border: 3px solid rgba(236,64,122,0.25); }
         .prompt-text { font-size: clamp(22px, 3.8vh, 38px); font-weight: 800; color: #2c2c2c; text-align: center; }
         .prompt-label { font-size: clamp(11px, 1.4vh, 14px); color: #888; text-transform: uppercase; letter-spacing: 1.5px; font-weight: 700; }
         .answer-timer { font-size: clamp(12px, 1.6vh, 15px); color: #ef6c00; font-weight: 700; }
@@ -159,7 +159,7 @@
         .rules-panel p { margin: 10px 0; color: #333; }
         .close-rules { position: absolute; top: 15px; right: 25px; font-size: 32px; cursor: pointer; color: var(--pink-dark); }
     </style>
-    <link rel="stylesheet" href="/css/mobile.css?v=5">
+    <link rel="stylesheet" href="/css/mobile.css?v=7">
 </head>
 
 <body th:attr="data-mode=${mode},data-room-code=${roomCode},data-player-token=${playerToken}">
@@ -418,7 +418,7 @@
     }
 
     function applyState(data) {
-        if (!data || data.humanScore === undefined) return;
+        if (!data || data.humanScore === undefined) { window.MundoGameGone(data); return; }
 
         humanScoreText.textContent = data.humanScore;
         aiScoreText.textContent = data.aiScore;
@@ -585,7 +585,8 @@
 
 <script src="/js/confetti.browser.js?v=1"></script>
 
-<script src="/js/bg-music.js?v=2"></script>
+<script src="/js/game-expired.js?v=1"></script>
+<script src="/js/bg-music.js?v=3"></script>
 <script src="/js/mobile.js?v=2"></script>
 </body>
 </html>

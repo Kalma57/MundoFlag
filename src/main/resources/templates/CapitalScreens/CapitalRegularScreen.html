@@ -64,7 +64,7 @@
             border-radius: 20px; box-shadow: var(--shadow-md); margin-bottom: 20px;
         }
         .prompt-label { font-size: 14px; color: #888; text-transform: uppercase; letter-spacing: 1.5px; font-weight: 700; }
-        .prompt-flag { height: 140px; width: auto; max-width: 80%; border-radius: 12px; box-shadow: var(--shadow-md); border: 3px solid rgba(0,137,123,0.25); }
+        .prompt-flag { height: 140px; width: auto; aspect-ratio: 4 / 3; object-fit: cover; max-width: 80%; border-radius: 12px; box-shadow: var(--shadow-md); border: 3px solid rgba(0,137,123,0.25); }
         .prompt-text { font-size: 30px; font-weight: 800; color: #2c2c2c; text-align: center; }
 
         .options-grid { width: 100%; max-width: 620px; display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
@@ -93,7 +93,7 @@
         .rules-panel p { margin: 10px 0; color: #333; }
         .close-rules { position: absolute; top: 15px; right: 25px; font-size: 32px; cursor: pointer; color: #00897b; }
     </style>
-    <link rel="stylesheet" href="/css/mobile.css?v=5">
+    <link rel="stylesheet" href="/css/mobile.css?v=7">
 </head>
 
 <body th:attr="data-mode=${mode}">
@@ -210,7 +210,7 @@
     loadQuestion();
 </script>
 
-<script src="/js/bg-music.js?v=2"></script>
+<script src="/js/bg-music.js?v=3"></script>
 <script src="/js/mobile.js?v=2"></script>
 </body>
 </html>

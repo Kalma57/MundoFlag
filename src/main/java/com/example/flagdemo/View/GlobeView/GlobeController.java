@@ -103,7 +103,9 @@ public class GlobeController {
             GlobeViewModel viewModel =
                     (GlobeViewModel) session.getAttribute("globeVM_" + gameId);
 
-            if (viewModel == null) return null;
+            // "{}" = this game no longer exists (session expired / server restarted);
+            // the page then starts a new one in place.
+            if (viewModel == null) return Collections.emptyMap();
 
             // The name is checked here (not in the browser) so every alias/spelling of a country
             // is accepted - an unknown name is rejected without costing an attempt.

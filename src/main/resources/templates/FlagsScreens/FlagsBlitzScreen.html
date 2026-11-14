@@ -567,7 +567,7 @@
             color: #ff7043;
         }
     </style>
-    <link rel="stylesheet" href="/css/mobile.css?v=5">
+    <link rel="stylesheet" href="/css/mobile.css?v=7">
 </head>
 
 <body th:attr="data-match-id=${matchId}">
@@ -795,7 +795,7 @@
     }
 
     function applyState(data) {
-        if (!data || data.humanScore === undefined) return;
+        if (!data || data.humanScore === undefined) { window.MundoGameGone(data); return; }
 
         humanScoreText.textContent = data.humanScore;
         aiScoreText.textContent = data.aiScore;
@@ -1040,7 +1040,8 @@
     startPolling();
 </script>
 
-<script src="/js/bg-music.js?v=2"></script>
+<script src="/js/game-expired.js?v=1"></script>
+<script src="/js/bg-music.js?v=3"></script>
 <script src="/js/mobile.js?v=2"></script>
 </body>
 </html>

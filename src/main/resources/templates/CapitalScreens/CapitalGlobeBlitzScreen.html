@@ -32,6 +32,16 @@
             "three-conic-polygon-geometry": "/js/three-globe.bundle.js?v=1"
         } }
     </script>
+  <!-- Start the globe's downloads right away, in parallel: without these the data files only
+       start downloading after all the 3D code has loaded and run, one step after another. -->
+  <link rel="preload" href="/assets/countries-50m.json" as="fetch" crossorigin="anonymous">
+  <link rel="preload" href="/assets/polygon-geometry-manifest.json" as="fetch" crossorigin="anonymous">
+  <link rel="preload" href="/assets/polygon-geometry.bin" as="fetch" crossorigin="anonymous">
+  <link rel="preload" href="/assets/earth-day.jpg" as="image" crossorigin="anonymous">
+  <link rel="modulepreload" href="/three/three.module.js?v=2">
+  <link rel="modulepreload" href="/js/three-globe.bundle.js?v=1">
+  <link rel="modulepreload" href="/js/globe.js?v=2060">
+  <link rel="modulepreload" href="/controls/OrbitControls.js">
 
     <link rel="stylesheet" href="/css/fonts.css?v=1">
 
@@ -211,7 +221,7 @@
         .rules-panel p { margin: 10px 0; color: #333; }
         .close-rules { position: absolute; top: 15px; right: 25px; font-size: 32px; cursor: pointer; color: var(--purple); }
     </style>
-    <link rel="stylesheet" href="/css/mobile.css?v=5">
+    <link rel="stylesheet" href="/css/mobile.css?v=7">
 </head>
 
 <body th:attr="data-match-id=${matchId}">
@@ -333,7 +343,7 @@
 <script src="/js/confetti.browser.js?v=1"></script>
 
 <script type="module">
-    import { initGlobe, colorCountry, focusOnCountry, resetGlobeColors, onCountryClick, setSelectedCountry, isCountryColored, resetCamera } from '/js/globe.js?v=2059';
+    import { initGlobe, colorCountry, focusOnCountry, resetGlobeColors, onCountryClick, setSelectedCountry, isCountryColored, resetCamera } from '/js/globe.js?v=2060';
 
     const promptCapital = document.getElementById('promptCapital');
     const feedbackBanner = document.getElementById('feedbackBanner');
@@ -438,7 +448,7 @@
     }
 
     function applyState(data) {
-        if (!data || data.humanScore === undefined) return;
+        if (!data || data.humanScore === undefined) { window.MundoGameGone(data); return; }
 
         humanScoreText.textContent = data.humanScore;
         aiScoreText.textContent = data.aiScore;
@@ -708,7 +718,8 @@
     startPolling();
 </script>
 
-<script src="/js/bg-music.js?v=2"></script>
+<script src="/js/game-expired.js?v=1"></script>
+<script src="/js/bg-music.js?v=3"></script>
 <script src="/js/mobile.js?v=2"></script>
 </body>
 </html>

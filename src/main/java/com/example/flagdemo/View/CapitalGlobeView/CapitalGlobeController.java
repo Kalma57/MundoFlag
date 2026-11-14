@@ -86,13 +86,15 @@ public class CapitalGlobeController {
 
     @RequestMapping(value = "/guess/ajax", method = {RequestMethod.POST, RequestMethod.GET})
     @ResponseBody
-    public GuessResultGlobeBL guessAjax(
+    public Object guessAjax(
             @RequestParam("countryName") String countryName,
             @RequestParam("gameId") String gameId,
             HttpSession session) {
 
         CapitalGlobeViewModel viewModel = (CapitalGlobeViewModel) session.getAttribute("capitalGlobeVM_" + gameId);
-        if (viewModel == null) return null;
+        // "{}" = this game no longer exists (session expired / server restarted); the page then
+        // starts a new one. An empty body still means "that spot isn't a country we know".
+        if (viewModel == null) return Collections.emptyMap();
 
         return viewModel.guess(countryName);
     }

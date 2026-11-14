@@ -12,6 +12,7 @@ import jakarta.servlet.http.HttpSession;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.*;
 
@@ -71,12 +72,9 @@ public class CapitalMultiplayerController {
         CapitalPvpMatchRoom room = registry.createRoom(quizMode, bestOf, token);
         session.setAttribute("pvpCapitalQuizToken_" + room.getRoomCode(), token);
 
-        model.addAttribute("mode", mode);
-        model.addAttribute("modeLabel", modeLabel(quizMode));
-        model.addAttribute("roomCode", room.getRoomCode());
-        model.addAttribute("playerToken", token);
-
-        return "CapitalScreens/CapitalMultiplayerWaitingScreen";
+        // Redirect to the GET room page so a refresh, Back, or Safari reopening the tab
+        // reloads a normal page instead of re-sending (or failing on) this form post.
+        return "redirect:/Capital/" + mode + "/pvp/room?roomCode=" + room.getRoomCode();
     }
 
     @PostMapping("/blitz/create")
@@ -95,19 +93,16 @@ public class CapitalMultiplayerController {
         CapitalPvpMatchRoom room = registry.createBlitzRoom(quizMode, durationSeconds, token);
         session.setAttribute("pvpCapitalQuizToken_" + room.getRoomCode(), token);
 
-        model.addAttribute("mode", mode);
-        model.addAttribute("modeLabel", modeLabel(quizMode));
-        model.addAttribute("roomCode", room.getRoomCode());
-        model.addAttribute("playerToken", token);
-
-        return "CapitalScreens/CapitalMultiplayerWaitingScreen";
+        // Redirect to the GET room page so a refresh, Back, or Safari reopening the tab
+        // reloads a normal page instead of re-sending (or failing on) this form post.
+        return "redirect:/Capital/" + mode + "/pvp/room?roomCode=" + room.getRoomCode();
     }
 
     @PostMapping("/join")
     public String join(
             @PathVariable String mode,
             @RequestParam("roomCode") String roomCode,
-            Model model,
+            RedirectAttributes redirectAttributes,
             HttpSession session) {
 
         CapitalQuizMode quizMode = parseMode(mode);
@@ -115,23 +110,29 @@ public class CapitalMultiplayerController {
 
         CapitalPvpMatchRoom room = registry.getRoom(roomCode);
         if (room == null) {
-            model.addAttribute("mode", mode);
-            model.addAttribute("modeLabel", modeLabel(quizMode));
-            model.addAttribute("joinError", "Room not found - double check the code and try again.");
-            return "CapitalScreens/CapitalMultiplayerLobbyScreen";
+            redirectAttributes.addFlashAttribute("joinError", "Room not found - double check the code and try again.");
+            return "redirect:/Capital/" + mode + "/pvp/lobby";
         }
 
         String token = UUID.randomUUID().toString();
         boolean joined = room.joinPlayer2(token);
         if (!joined) {
-            model.addAttribute("mode", mode);
-            model.addAttribute("modeLabel", modeLabel(quizMode));
-            model.addAttribute("joinError", "That room is already full or the match is already over.");
-            return "CapitalScreens/CapitalMultiplayerLobbyScreen";
+            redirectAttributes.addFlashAttribute("joinError", "That room is already full or the match is already over.");
+            return "redirect:/Capital/" + mode + "/pvp/lobby";
         }
 
         session.setAttribute("pvpCapitalQuizToken_" + room.getRoomCode(), token);
-        return renderMatchScreen(mode, quizMode, room, 2, model);
+        return "redirect:/Capital/" + mode + "/pvp/room?roomCode=" + room.getRoomCode();
+    }
+
+    /**
+     * Create/join only answer form posts. A browser reopening one of those addresses (Safari
+     * reloading a background tab, Back after an old version of the site) asks with GET, so send
+     * it to the lobby instead of an error page.
+     */
+    @GetMapping({"/create", "/blitz/create", "/join"})
+    public String formAddressOpenedDirectly(@PathVariable String mode) {
+        return "redirect:/Capital/" + mode + "/pvp/lobby";
     }
 
     @GetMapping("/room")

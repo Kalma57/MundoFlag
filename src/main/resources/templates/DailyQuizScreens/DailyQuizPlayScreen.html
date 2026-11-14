@@ -32,6 +32,16 @@
             "three-conic-polygon-geometry": "/js/three-globe.bundle.js?v=1"
         } }
     </script>
+  <!-- Start the globe's downloads right away, in parallel: without these the data files only
+       start downloading after all the 3D code has loaded and run, one step after another. -->
+  <link rel="preload" href="/assets/countries-50m.json" as="fetch" crossorigin="anonymous">
+  <link rel="preload" href="/assets/polygon-geometry-manifest.json" as="fetch" crossorigin="anonymous">
+  <link rel="preload" href="/assets/polygon-geometry.bin" as="fetch" crossorigin="anonymous">
+  <link rel="preload" href="/assets/earth-day.jpg" as="image" crossorigin="anonymous">
+  <link rel="modulepreload" href="/three/three.module.js?v=2">
+  <link rel="modulepreload" href="/js/three-globe.bundle.js?v=1">
+  <link rel="modulepreload" href="/js/globe.js?v=2060">
+  <link rel="modulepreload" href="/controls/OrbitControls.js">
 
     <link rel="stylesheet" href="/css/fonts.css?v=1">
 
@@ -196,7 +206,7 @@
         .reveal-result.fail { color: #c62828; }
         .reveal-country-label { font-size: 16px; color: #888; text-transform: uppercase; letter-spacing: 1.5px; font-weight: 700; margin-top: 10px; }
         .reveal-country-name { font-size: 42px; font-weight: 800; color: #ad6118; }
-        .reveal-flag { width: 175px; border-radius: 12px; box-shadow: var(--shadow-md); margin-top: 10px; border: 3px solid rgba(230,126,34,0.25); }
+        .reveal-flag { width: 175px; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 12px; box-shadow: var(--shadow-md); margin-top: 10px; border: 3px solid rgba(230,126,34,0.25); }
         .stage2-complete-names { font-size: 26px; font-weight: 700; color: #ad6118; margin-top: 6px; }
 
         .stage-label-small { font-size: 19px; font-weight: 800; color: #ad6118; letter-spacing: 2px; margin-bottom: 6px; }
@@ -245,7 +255,7 @@
         .stage4-card p { font-size: 25px; line-height: 1.8; color: #333; }
         .daily-quiz-done { margin-top: 28px; font-size: 27px; font-weight: 700; color: #888; text-align: center; }
     </style>
-    <link rel="stylesheet" href="/css/mobile.css?v=5">
+    <link rel="stylesheet" href="/css/mobile.css?v=7">
 </head>
 
 <body th:attr="data-gameid=${gameId}">
@@ -403,7 +413,7 @@
 </script>
 
 <script type="module">
-    import { initGlobe, colorCountry, focusOnCountry } from '/js/globe.js?v=2059';
+    import { initGlobe, colorCountry, focusOnCountry } from '/js/globe.js?v=2060';
 
     let globeReady = false;
     let globeInitStarted = false;
@@ -856,7 +866,7 @@
     }
 </script>
 
-<script src="/js/bg-music.js?v=2"></script>
+<script src="/js/bg-music.js?v=3"></script>
 <script src="/js/mobile.js?v=2"></script>
 </body>
 </html>

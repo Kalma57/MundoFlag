@@ -236,6 +236,8 @@
         .prompt-flag {
             height: clamp(80px, 18vh, 200px);
             width: auto;
+            aspect-ratio: 4 / 3;     /* flag images are squares with the flag in a 4:3 band */
+            object-fit: cover;
             max-width: 58vw;
             border-radius: 12px;
             box-shadow: var(--shadow-md);
@@ -500,7 +502,7 @@
             color: #ab47bc;
         }
     </style>
-    <link rel="stylesheet" href="/css/mobile.css?v=5">
+    <link rel="stylesheet" href="/css/mobile.css?v=7">
 </head>
 
 <body th:attr="data-match-id=${matchId}, data-mode=${mode}">
@@ -697,7 +699,7 @@
     }
 
     function applyState(data) {
-        if (!data || data.humanScore === undefined) return;
+        if (!data || data.humanScore === undefined) { window.MundoGameGone(data); return; }
 
         humanScoreText.textContent = data.humanScore;
         aiScoreText.textContent = data.aiScore;
@@ -759,7 +761,7 @@
             row.innerHTML =
                 '<span class="recap-order">' + q.order + '</span>' +
                 flagImg +
-                '<span class="recap-prompt">' + (q.promptText || '') + '</span>' +
+                '<span class="recap-prompt">' + (q.promptText || '') + (q.correctAnswerText ? ' → ' + q.correctAnswerText : '') + '</span>' +
                 humanCell + aiCell;
             matchRecap.appendChild(row);
         });
@@ -883,7 +885,8 @@
     startPolling();
 </script>
 
-<script src="/js/bg-music.js?v=2"></script>
+<script src="/js/game-expired.js?v=1"></script>
+<script src="/js/bg-music.js?v=3"></script>
 <script src="/js/mobile.js?v=2"></script>
 </body>
 </html>

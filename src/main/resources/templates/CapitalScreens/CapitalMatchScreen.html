@@ -230,6 +230,8 @@
         .prompt-flag {
             height: clamp(80px, 18vh, 200px);
             width: auto;
+            aspect-ratio: 4 / 3;     /* flag images are squares with the flag in a 4:3 band */
+            object-fit: cover;
             max-width: 58vw;
             border-radius: 12px;
             box-shadow: var(--shadow-md);
@@ -509,7 +511,7 @@
             color: #7c4dff;
         }
     </style>
-    <link rel="stylesheet" href="/css/mobile.css?v=5">
+    <link rel="stylesheet" href="/css/mobile.css?v=7">
 </head>
 
 <body th:attr="data-match-id=${matchId}, data-mode=${mode}">
@@ -738,7 +740,7 @@
     }
 
     function applyState(data) {
-        if (!data || data.humanScore === undefined) return;
+        if (!data || data.humanScore === undefined) { window.MundoGameGone(data); return; }
 
         updateScoreColors(data);
         roundIndicator.textContent = 'Round ' + data.roundNumber + ' - race to ' + data.pointsToWin + ' correct';
@@ -928,7 +930,8 @@
     startPolling();
 </script>
 
-<script src="/js/bg-music.js?v=2"></script>
+<script src="/js/game-expired.js?v=1"></script>
+<script src="/js/bg-music.js?v=3"></script>
 <script src="/js/mobile.js?v=2"></script>
 </body>
 </html>
