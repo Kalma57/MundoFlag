@@ -364,19 +364,54 @@ function handleCanvasClick(event, canvas) {
     pointerNDC.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
 
     raycaster.setFromCamera(pointerNDC, camera);
-    const intersects = raycaster.intersectObject(world, true);
-    // Only accept a hit near the globe's own radius (100) - excludes the larger, semi-transparent
-    // atmosphere shell (radius ~118 here) so a click through the atmosphere still resolves to
-    // whatever's on the actual surface underneath it, not the shell itself.
-    const surfaceHit = intersects.find(i => i.point.length() < 106);
-    if (!surfaceHit) return; // clicked empty space/background, not the globe
+    // Where the tap meets the globe's surface: a direct ray/sphere calculation against the globe
+    // ball (radius 100, centred at the origin - three-globe's GLOBE_RADIUS; the world object is
+    // never moved, only the camera). This used to test the ray against every one of the globe's
+    // meshes (hundreds of country shapes plus the atmosphere shell) on each tap, which was the
+    // slow part of a tap on a phone; the country is found from the lat/lng afterwards anyway.
+    // Missing the ball (tapping the space around it) is not a click on anything.
+    if (!raycaster.ray.intersectSphere(GLOBE_SURFACE, globeHitPoint)) return;
 
-    const { lat, lng } = cartesianToLatLon(surfaceHit.point);
+    const { lat, lng } = cartesianToLatLon(globeHitPoint);
     const feature = findCountryAtLatLon(lat, lng);
     if (!feature || NON_PLAYABLE_TERRITORIES.has(feature.properties.name)) return;
-    if (countryClickCallback) {
-        countryClickCallback(mapNameToDbName(feature.properties.name));
+    const dbName = mapNameToDbName(feature.properties.name);
+
+    // A country that's already colored (guessed, revealed or found) shows its name where it was
+    // tapped, so the player can tell which colored shape is which and how close it is.
+    if (guessedCountriesColors[feature.properties.name] !== undefined) {
+        showCountryNameLabel(dbName, event.clientX, event.clientY);
     }
+    if (countryClickCallback) {
+        countryClickCallback(dbName);
+    }
+}
+
+const GLOBE_SURFACE = new THREE.Sphere(new THREE.Vector3(0, 0, 0), 100);
+const globeHitPoint = new THREE.Vector3();
+
+/* Small name label shown for 2 seconds at the tap point (one element, reused). */
+let countryNameLabel = null;
+let countryNameLabelTimer = null;
+function showCountryNameLabel(name, x, y) {
+    if (!countryNameLabel) {
+        countryNameLabel = document.createElement('div');
+        countryNameLabel.setAttribute('role', 'status');
+        countryNameLabel.style.cssText = 'position:fixed;z-index:150;pointer-events:none;' +
+            'transform:translate(-50%,-100%);padding:6px 12px;border-radius:999px;white-space:nowrap;' +
+            'background:rgba(33,33,33,0.88);color:#fff;font:700 15px Nunito,"Segoe UI",sans-serif;' +
+            'box-shadow:0 4px 14px rgba(0,0,0,0.25);transition:opacity 0.25s;opacity:0;';
+        document.body.appendChild(countryNameLabel);
+    }
+    countryNameLabel.textContent = '📍 ' + name;
+    // Keep the label on screen near the edges: measure it, then clamp its centre.
+    const half = countryNameLabel.offsetWidth / 2;
+    const left = Math.min(Math.max(x, half + 8), window.innerWidth - half - 8);
+    countryNameLabel.style.left = left + 'px';
+    countryNameLabel.style.top = Math.max(y - 14, countryNameLabel.offsetHeight + 8) + 'px';
+    countryNameLabel.style.opacity = '1';
+    clearTimeout(countryNameLabelTimer);
+    countryNameLabelTimer = setTimeout(() => { countryNameLabel.style.opacity = '0'; }, 2000);
 }
 
 /** Exact inverse of three-globe's own polar2Cartesian(lat, lng, alt) -> {x, y, z}. */
