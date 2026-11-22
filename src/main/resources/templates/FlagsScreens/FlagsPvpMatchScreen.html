@@ -486,10 +486,10 @@
             color: #4CAF50;
         }
     </style>
-    <link rel="stylesheet" href="/css/mobile.css?v=3">
+    <link rel="stylesheet" href="/css/mobile.css?v=4">
 </head>
 
-<body th:attr="data-room-code=${roomCode},data-player-token=${playerToken}">
+<body class="flags-screen" th:attr="data-room-code=${roomCode},data-player-token=${playerToken}">
 
 <div class="badge-stack">
     <div class="badge" th:classappend="${difficulty.name() eq 'EASY'} ? 'easy' : 'hard'">

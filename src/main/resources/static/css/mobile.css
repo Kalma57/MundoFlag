@@ -62,9 +62,12 @@
 
 @media (max-width: 700px) {
 
-    /* Decorative glows sit partly off-screen on purpose; never let them widen the page */
+    /* Decorative glows sit partly off-screen on purpose; never let them widen the page.
+       clip (where supported) instead of hidden, because hidden turns body into its own scroll
+       box and then position: sticky (the Flags guess box below) stops working. */
     html, body {
         overflow-x: hidden !important;
+        overflow-x: clip !important;
         max-width: 100%;
     }
 
@@ -224,6 +227,59 @@
     #globeContainer {
         width: 100% !important;
         height: min(92vw, 440px) !important;
+    }
+
+    /* ---------- Flags screens (solo, vs computer, 1v1, blitz) ---------- */
+    /* The guess box sticks to the top of the screen while scrolling, so with the keyboard open
+       the box and the newest guess (always the first row) are on screen together */
+    .flags-screen .guess-form {
+        position: sticky !important;
+        top: 0;
+        z-index: 20;
+        padding: 10px 0 !important;
+        margin-bottom: 10px !important;
+        background: linear-gradient(to bottom, rgba(255,255,255,0.97) 80%, rgba(255,255,255,0));
+    }
+
+    .flags-screen .guess-form button {
+        flex: 1 1 auto;
+        padding: 10px 16px !important;
+    }
+
+    .flags-screen .guesses {
+        gap: 10px !important;
+    }
+
+    /* One compact row: the guessed flag and the result side by side, each half the row */
+    .flags-screen .guess-row {
+        gap: 10px !important;
+        padding: 10px !important;
+        align-items: flex-start !important;
+        border-radius: 14px !important;
+    }
+
+    .flags-screen .guess-row:hover {
+        transform: none !important;
+    }
+
+    .flags-screen .guess-row .flag {
+        flex: 1 1 0 !important;
+        min-width: 0 !important;
+    }
+
+    .flags-screen .guess-row .guess-label {
+        font-size: 13px !important;
+        margin-bottom: 6px !important;
+        text-align: center;
+        overflow-wrap: anywhere;
+    }
+
+    /* Same 4:3 shape as on desktop, just smaller - never squeezed into a tall strip */
+    .flags-screen .guess-row .flag img {
+        width: 100% !important;
+        height: auto !important;
+        aspect-ratio: 4 / 3;
+        border-radius: 8px !important;
     }
 
     /* ---------- Anything image-like never wider than the screen ---------- */
