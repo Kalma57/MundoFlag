@@ -1,6 +1,6 @@
 # Google Play listing — copy & paste
 
-Everything Play Console asks for, in the order it asks. `DOMAIN` = the site's address (e.g. `mundoflag.duckdns.org`).
+Everything Play Console asks for, in the order it asks.
 
 ## Files in this folder
 | Play Console field | File |
@@ -37,12 +37,12 @@ Play your way:
 
 No ads. No accounts. No tracking. Just geography.
 ```
-**App category:** Game → Trivia · **Contact email:** your Gmail · **Website:** `https://DOMAIN`
+**App category:** Game → Trivia · **Contact email:** `MundoFlagService@gmail.com` · **Website:** `https://mundoflag.onrender.com`
 
 ## App content (Policy → App content) — the answers
 | Section | Answer |
 |---|---|
-| Privacy policy | `https://DOMAIN/privacy` |
+| Privacy policy | `https://mundoflag.onrender.com/privacy` |
 | App access | All functionality is available without special access |
 | Ads | No, my app does not contain ads |
 | Content rating | Category **Game**. Every question **No** (no violence, sexual content, bad language, drugs, gambling; users can't chat or share content; no location sharing; no purchases) → rated for everyone |
