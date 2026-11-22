@@ -581,6 +581,18 @@
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
     }
 
+    /* ---------- Flags (solo, vs computer, Blitz, vs friend): the guess box stays on screen ----------
+       While scrolling down through your guesses, the box sticks to the top of the screen, so you can
+       keep guessing without scrolling back up. ("Flags pages" = a guess box, no globe, not the Daily Quiz.) */
+    body:has(.guess-form):not(:has(#globeContainer)):not(:has(#stage1)) .guess-form {
+        position: sticky !important;
+        top: env(safe-area-inset-top, 0px);
+        z-index: 20;
+        padding: 10px 0 !important;
+        margin-bottom: 10px !important;
+        background: linear-gradient(to bottom, rgba(255, 255, 255, 0.97) 80%, rgba(255, 255, 255, 0));
+    }
+
     /* ---------- Daily Quiz ---------- */
     /* (13) timer, Pause and Home stay at the top of the screen through every stage */
     body:has(#stage1) .timer-badge, body:has(#stage1) .top-right-controls {

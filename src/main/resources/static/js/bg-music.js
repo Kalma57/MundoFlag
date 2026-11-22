@@ -20,16 +20,25 @@
     audio.preload = 'none';
     audio.volume = VOLUME;
 
+    // Where the song has to jump to on this page. Until the song has loaded enough to jump there,
+    // audio.currentTime still reads 0 - saving it at that moment (the timer below, or leaving a slow
+    // page quickly) wiped the real position, and the next screen started the song from the top.
+    let pendingTime = null;
+
     function load(index, startAt) {
         state.track = index % TRACKS.length;
         audio.src = TRACKS[state.track];
-        if (startAt > 0) {
-            audio.addEventListener('loadedmetadata', () => { audio.currentTime = startAt; }, { once: true });
+        pendingTime = startAt > 0 ? startAt : null;
+        if (pendingTime !== null) {
+            audio.addEventListener('loadedmetadata', () => {
+                audio.currentTime = pendingTime;
+                pendingTime = null;
+            }, { once: true });
         }
     }
 
     function save() {
-        const time = audio.src ? (audio.currentTime || 0) : state.time;
+        const time = pendingTime !== null ? pendingTime : (audio.src ? (audio.currentTime || 0) : state.time);
         write(sessionStorage, STATE_KEY, JSON.stringify({ track: state.track, time: time }));
     }
 
@@ -58,7 +67,7 @@
         if (document.hidden) { save(); audio.pause(); }
         else tryPlay();
     });
-    setInterval(save, 2000);
+    setInterval(save, 1000);
 
     // Small mute/unmute button in the corner.
     function buildButton() {
