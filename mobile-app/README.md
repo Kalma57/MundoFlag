@@ -5,8 +5,8 @@ A [Capacitor](https://capacitorjs.com) shell around the live MundoFlag site: the
 server reaches the app immediately — a new store release is only needed for changes in this folder.
 
 ## Before the first build
-1. **Site address** — currently `https://mundoflag.onrender.com`. If the site moves (e.g. to Oracle
-   with its own domain), it must stay **HTTPS** (iOS refuses plain HTTP) and be changed in two places:
+1. **Site address** — `https://mundoflag.duckdns.org` (the Oracle server). If the site ever moves,
+   the address must stay **HTTPS** (Android and iOS refuse plain HTTP) and be changed in two places:
    - `capacitor.config.json` → `server.url`
    - `www/offline.html` → `SITE`
 2. **App id** — `com.mundoflag.app` (`capacitor.config.json` → `appId`). It becomes permanent
