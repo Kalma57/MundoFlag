@@ -7,6 +7,11 @@ services:
       context: ../..
     restart: unless-stopped
     read_only: true          # the container's files can't be changed while it runs
+    # no Linux privileges at all, and nothing inside can ever gain more (e.g. via setuid)
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 2g            # a runaway app can't starve the whole VM (Java takes ~60% of this)
+    pids_limit: 512
     tmpfs:
       # the only writable place: SQLite's temp copy of the DB, plus the native library
       # sqlite-jdbc unpacks here and loads, so it must allow executing (Docker's default is noexec)
@@ -18,6 +23,10 @@ services:
       # password for the /stats dashboard (STATS_KEY in .env); empty = dashboard off
       - MUNDOFLAG_STATS_KEY=${STATS_KEY:-}
       - MUNDOFLAG_STATS_DIR=/app/stats
+      # session cookie: never sent over plain http, not sent by other sites' requests.
+      # COOKIE_SECURE=true in .env once the site has HTTPS (a domain); keep false on plain :80
+      - SERVER_SERVLET_SESSION_COOKIE_SECURE=${COOKIE_SECURE:-false}
+      - SERVER_SERVLET_SESSION_COOKIE_SAME_SITE=lax
     volumes:
       - stats_data:/app/stats   # the anonymous visit/game counters survive restarts and redeploys
     expose:
@@ -26,6 +35,12 @@ services:
   caddy:
     image: caddy:2.8.4-alpine
     restart: unless-stopped
+    # only the one privilege Caddy needs: listening on ports 80/443
+    cap_drop: [ALL]
+    cap_add: [NET_BIND_SERVICE]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 256m
+    pids_limit: 256
     ports:
       - "80:80"
       - "443:443"

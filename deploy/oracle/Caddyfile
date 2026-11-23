@@ -8,6 +8,9 @@
 		X-Content-Type-Options nosniff
 		X-Frame-Options SAMEORIGIN
 		Referrer-Policy strict-origin-when-cross-origin
+		# browsers that saw the site once refuse plain http to it for a year
+		# (only honored over HTTPS, so harmless while SITE_ADDRESS is still :80)
+		Strict-Transport-Security "max-age=31536000"
 		-Server
 	}
 
