@@ -287,7 +287,17 @@
 
     window.MundoFlag = { share, countEvent, platform };
 
+    // Keep the globe's heavy files on this device (see /sw.js). Only after the page has finished
+    // loading, so it never slows the page itself; browsers without service workers just skip it.
+    function keepGlobeFilesOnDevice() {
+        if (!('serviceWorker' in navigator)) return;
+        const register = () => navigator.serviceWorker.register('/sw.js').catch(() => { /* site works without it */ });
+        if (document.readyState === 'complete') register();
+        else window.addEventListener('load', register);
+    }
+
     function init() {
+        keepGlobeFilesOnDevice();
         countVisit();
         attachAll();
         // pages that build their guess box later (e.g. after a round starts) are picked up too
