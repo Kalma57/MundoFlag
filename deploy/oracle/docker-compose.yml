@@ -8,7 +8,9 @@ services:
     restart: unless-stopped
     read_only: true          # the container's files can't be changed while it runs
     tmpfs:
-      - /tmp                 # the only writable place: SQLite's temp copy of the DB
+      # the only writable place: SQLite's temp copy of the DB, plus the native library
+      # sqlite-jdbc unpacks here and loads, so it must allow executing (Docker's default is noexec)
+      - /tmp:exec
     environment:
       - SERVER_FORWARD_HEADERS_STRATEGY=framework
       # key that decrypts the weekly daily-quiz file, kept only in .env on the server
