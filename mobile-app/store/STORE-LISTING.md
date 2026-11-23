@@ -37,12 +37,12 @@ Play your way:
 
 No ads. No accounts. No tracking. Just geography.
 ```
-**App category:** Game → Trivia · **Contact email:** `MundoFlagService@gmail.com` · **Website:** `https://mundoflag.onrender.com`
+**App category:** Game → Trivia · **Contact email:** `MundoFlagService@gmail.com` · **Website:** `https://mundoflag.duckdns.org`
 
 ## App content (Policy → App content) — the answers
 | Section | Answer |
 |---|---|
-| Privacy policy | `https://mundoflag.onrender.com/privacy` |
+| Privacy policy | `https://mundoflag.duckdns.org/privacy` |
 | App access | All functionality is available without special access |
 | Ads | No, my app does not contain ads |
 | Content rating | Category **Game**. Every question **No** (no violence, sexual content, bad language, drugs, gambling; users can't chat or share content; no location sharing; no purchases) → rated for everyone |
