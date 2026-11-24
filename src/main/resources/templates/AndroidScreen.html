@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="description" content="Free geography games: guess countries by their flags, find them on a 3D globe, match capital cities, and take a new daily quiz. Play solo, against the computer, or 1v1 with a friend.">
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+    <link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    <!-- "Add to Home Screen" opens the game full screen, like the app -->
+    <link rel="manifest" href="/manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="MundoFlag">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="theme-color" content="#E8F9F4">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="MundoFlag">
+    <meta property="og:title" content="MundoFlag for Android">
+    <meta property="og:description" content="Guess countries by their flags, find them on a 3D globe, match capital cities, and take a new daily quiz. Solo, vs the computer, or 1v1 with a friend.">
+    <meta property="og:image" th:if="${siteUrl}" th:content="${siteUrl} + '/img/og-image.png'">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta name="twitter:card" content="summary_large_image">
+    <title>MundoFlag for Android</title>
+
+    <link rel="stylesheet" href="/css/fonts.css?v=1">
+
+    <style>
+        *{
+            margin:0;
+            padding:0;
+            box-sizing:border-box;
+            font-family:'Nunito', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        h1, h2{
+            font-family:'Baloo 2', 'Nunito', sans-serif;
+        }
+
+        /* Same animated gradient background as the home page */
+        body{
+            min-height:100vh;
+            padding:40px 16px 80px;
+            color:#24423d;
+            background: linear-gradient(-45deg,#e9f8f5,#f9f9f9,#dff6f1,#e6fffb);
+            background-size:400% 400%;
+            animation: gradientMove 12s ease infinite;
+        }
+
+        @keyframes gradientMove{
+            0%{ background-position:0% 50%; }
+            50%{ background-position:100% 50%; }
+            100%{ background-position:0% 50%; }
+        }
+
+        .back-link{
+            display:inline-block;
+            margin-bottom:24px;
+            padding:8px 16px;
+            border-radius:999px;
+            background:#fff;
+            color:#1a9e8a;
+            font-weight:700;
+            text-decoration:none;
+            box-shadow:0 2px 10px rgba(0,0,0,0.08);
+        }
+
+        .page{
+            max-width:760px;
+            margin:0 auto;
+        }
+
+        h1{
+            font-size:44px;
+            color:#1a9e8a;
+            margin-bottom:6px;
+        }
+
+        .intro{
+            margin-bottom:28px;
+            color:#55706b;
+        }
+
+        section{
+            background:#fff;
+            border-radius:18px;
+            padding:22px 24px;
+            margin-bottom:18px;
+            box-shadow:0 4px 18px rgba(0,0,0,0.06);
+        }
+
+        h2{
+            font-size:24px;
+            margin-bottom:12px;
+        }
+
+        ul{
+            list-style:none;
+        }
+
+        li{
+            padding:10px 0;
+            border-top:1px solid #eef3f2;
+            line-height:1.5;
+        }
+
+        li:first-child{
+            border-top:none;
+            padding-top:0;
+        }
+
+        .work{
+            font-weight:700;
+        }
+
+        .license{
+            display:inline-block;
+            margin-left:6px;
+            padding:1px 8px;
+            border-radius:999px;
+            background:#e6f7f4;
+            color:#13806f;
+            font-size:13px;
+            font-weight:700;
+        }
+
+        .note{
+            display:block;
+            color:#6b827e;
+            font-size:14px;
+        }
+
+        a{
+            color:#13806f;
+        }
+    </style>
+    <link rel="stylesheet" href="/css/mobile.css?v=12">
+    <style>
+        .steps{ counter-reset:step; }
+        .step{ display:flex; gap:14px; align-items:flex-start; }
+        .step + .step{ margin-top:18px; padding-top:18px; border-top:1px solid #eef3f2; }
+        .step-num{ flex:none; width:34px; height:34px; border-radius:50%; background:#1a9e8a; color:#fff;
+                   font-weight:800; display:flex; align-items:center; justify-content:center; font-size:17px; }
+        .step h2{ font-size:21px; margin-bottom:6px; }
+        .step p{ color:#55706b; line-height:1.5; margin-bottom:12px; }
+        .btn{ display:inline-flex; align-items:center; justify-content:center; min-height:48px; padding:0 24px;
+              border-radius:999px; background:#1a9e8a; color:#fff !important; font-weight:800; font-size:17px;
+              text-decoration:none; box-shadow:0 6px 16px rgba(26,158,138,0.3); }
+        .btn.secondary{ background:#fff; color:#13806f !important; border:2px solid #1a9e8a; box-shadow:none; }
+        .badge{ display:inline-block; margin-left:8px; padding:2px 10px; border-radius:999px; background:#ffe9cc;
+                color:#b35c00; font-size:15px; font-weight:800; vertical-align:middle; }
+        .small{ font-size:15px; color:#6b827e; line-height:1.5; }
+    </style>
+</head>
+<body>
+<div class="page">
+    <a class="back-link" href="/">← Home</a>
+    <h1>MundoFlag for Android <span class="badge">Beta</span></h1>
+
+    <!-- ===== soon: nothing to install yet ===== -->
+    <th:block th:unless="${beta}">
+        <p class="intro">The Android app is almost ready for beta testing. Check back in a few days!</p>
+        <section>
+            <h2>Meanwhile, play in your browser</h2>
+            <p class="small" style="margin-bottom:14px">Everything in the app is already on the website, no sign-up needed.</p>
+            <a class="btn" href="/">Play MundoFlag</a>
+        </section>
+    </th:block>
+
+    <!-- ===== beta: closed testing on Google Play ===== -->
+    <th:block th:if="${beta}">
+        <p class="intro">Before MundoFlag launches on Google Play, it's in a short beta. Joining takes two quick steps,
+            using the Google account that's on your Android phone.</p>
+        <section class="steps">
+            <div class="step">
+                <div class="step-num">1</div>
+                <div>
+                    <h2>Join the testers group</h2>
+                    <p>Google only lets testers on the list download the beta.</p>
+                    <a class="btn" th:href="${testersGroupUrl}" target="_blank" rel="noopener">Join the group</a>
+                </div>
+            </div>
+            <div class="step">
+                <div class="step-num">2</div>
+                <div>
+                    <h2>Become a tester &amp; install</h2>
+                    <p>Tap <b>Become a tester</b>, then <b>Download it on Google Play</b>.</p>
+                    <a class="btn" th:href="${playTestingUrl}" target="_blank" rel="noopener">Get the beta</a>
+                </div>
+            </div>
+        </section>
+        <section>
+            <h2>Thank you! 🙏</h2>
+            <p class="small">Please keep the app for at least 14 days: Google needs a group of active testers before it
+                can be released to everyone.
+                <span th:if="${contactEmail}">Found a bug or have an idea? Write to
+                    <a th:href="'mailto:' + ${contactEmail}" th:text="${contactEmail}">email</a>.</span></p>
+        </section>
+    </th:block>
+
+    <section>
+        <h2>On iPhone?</h2>
+        <p class="small" style="margin-bottom:14px">Play in Safari, then tap Share → <b>Add to Home Screen</b>: it opens full screen, just like an app.</p>
+        <a class="btn secondary" href="/">Open MundoFlag</a>
+    </section>
+</div>
+
+<script src="/js/bg-music.js?v=4"></script>
+<script src="/js/mobile.js?v=3"></script>
+</body>
+</html>
