@@ -109,17 +109,41 @@ const tinyCountriesExtras = {
 // inspecting the actual /assets/countries-50m.json - see tools/ for how to re-derive these if
 // the map data file is ever swapped out.
 const DETACHED_SUBPOLYGONS = {
-    "France": [3, 4, 5, 6, 7, 8, 9],   // Mayotte, Réunion, Martinique, Guadeloupe (x3), French Guiana
-    "Norway": [22, 23, 24, 25, 26, 27, 28, 29, 30, 31]  // Jan Mayen + the Svalbard archipelago
+    "France": {
+        "Mayotte": [3],
+        "Réunion": [4],
+        "Martinique": [5],
+        "Guadeloupe": [6, 7, 8],
+        "French Guiana": [9]
+    },
+    "Norway": {
+        "Svalbard and Jan Mayen": [22, 23, 24, 25, 26, 27, 28, 29, 30, 31]
+    }
 };
 
+// Takes each detached territory's sub-polygons OUT of the parent and re-adds them as their OWN
+// feature named exactly like our DB row. Previously they were only stripped, so no polygon
+// existed for them at all: guessing e.g. French Guiana stored a color nobody ever drew, and
+// clicking it hit nothing. The precomputed geometry is keyed by the coordinates of each single
+// polygon (not by country), so these re-added polygons still hit polygon-geometry.bin.
 function stripDetachedSubPolygons(data) {
+    const added = [];
     for (const feature of data.features) {
-        const toStrip = DETACHED_SUBPOLYGONS[feature.properties.name];
-        if (toStrip && feature.geometry.type === 'MultiPolygon') {
-            feature.geometry.coordinates = feature.geometry.coordinates.filter((_, i) => !toStrip.includes(i));
+        const territories = DETACHED_SUBPOLYGONS[feature.properties.name];
+        if (!territories || feature.geometry.type !== 'MultiPolygon') continue;
+        const original = feature.geometry.coordinates;
+        const stripped = new Set();
+        for (const [territoryName, indices] of Object.entries(territories)) {
+            added.push({
+                type: 'Feature',
+                properties: { name: territoryName },
+                geometry: { type: 'MultiPolygon', coordinates: indices.map(i => original[i]) }
+            });
+            indices.forEach(i => stripped.add(i));
         }
+        feature.geometry.coordinates = original.filter((_, i) => !stripped.has(i));
     }
+    data.features.push(...added);
 }
 
 /**
