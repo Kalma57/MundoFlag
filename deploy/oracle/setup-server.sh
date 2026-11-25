@@ -36,3 +36,5 @@ fi
 echo
 echo "Done. Log out and back in (so the docker group applies), then run:"
 echo "  cd $APP_DIR/deploy/oracle && bash deploy.sh"
+echo "and, so every new commit on main deploys by itself within 5 minutes:"
+echo "  bash install-auto-update.sh"
