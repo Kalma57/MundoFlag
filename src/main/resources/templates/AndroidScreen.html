@@ -151,7 +151,18 @@
         .badge{ display:inline-block; margin-left:8px; padding:2px 10px; border-radius:999px; background:#ffe9cc;
                 color:#b35c00; font-size:15px; font-weight:800; vertical-align:middle; }
         .small{ font-size:15px; color:#6b827e; line-height:1.5; }
+        .android-hint{ margin-bottom:18px; padding:10px 14px; border-radius:12px; background:#e6f7f4; }
+        .notice{ background:#fff4e5; border:2px solid #ffcf8f; }
+        .ios-only{ display:none; }
+        html.is-ios .ios-only{ display:block; }
     </style>
+    <script>
+        // iPhone / iPad (newer iPads report themselves as a Mac with a touch screen)
+        if (/iPhone|iPad|iPod/.test(navigator.userAgent)
+                || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)) {
+            document.documentElement.classList.add('is-ios');
+        }
+    </script>
 </head>
 <body>
 <div class="page">
@@ -170,30 +181,57 @@
 
     <!-- ===== beta: closed testing on Google Play ===== -->
     <th:block th:if="${beta}">
-        <p class="intro">Before MundoFlag launches on Google Play, it's in a short beta. Joining takes two quick steps,
-            using the Google account that's on your Android phone.</p>
+        <p class="intro">Before MundoFlag launches on Google Play, it's in a short beta. Joining takes a couple of
+            minutes, <b>on your Android phone</b>.</p>
+
+        <!-- shown instead of the steps' warning when the page is opened on an iPhone / iPad (see script below) -->
+        <section class="ios-only notice">
+            <h2>📱 You're on an iPhone</h2>
+            <p class="small">The beta app is for Android phones only. On iPhone you can play the full game in
+                Safari, see below. Or open this page on an Android phone to install the app.</p>
+        </section>
+
         <section class="steps">
+            <p class="small android-hint">💡 Use the <b>same Google account</b> in every step: the one your phone's
+                Play Store is signed in to.</p>
             <div class="step">
                 <div class="step-num">1</div>
                 <div>
                     <h2>Join the testers group</h2>
-                    <p>Google only lets testers on the list download the beta.</p>
+                    <p>On the page that opens, tap <b>Join group</b> (sign in to Google if asked).
+                        Google only lets people on this list download the beta.</p>
                     <a class="btn" th:href="${testersGroupUrl}" target="_blank" rel="noopener">Join the group</a>
                 </div>
             </div>
             <div class="step">
                 <div class="step-num">2</div>
                 <div>
-                    <h2>Become a tester &amp; install</h2>
-                    <p>Tap <b>Become a tester</b>, then <b>Download it on Google Play</b>.</p>
+                    <h2>Become a tester</h2>
+                    <p>Come back here and tap the button below, then tap <b>Become a tester</b>.</p>
                     <a class="btn" th:href="${playTestingUrl}" target="_blank" rel="noopener">Get the beta</a>
+                </div>
+            </div>
+            <div class="step">
+                <div class="step-num">3</div>
+                <div>
+                    <h2>Install from Google Play</h2>
+                    <p>On that same page, tap <b>download it on Google Play</b>, then <b>Install</b>.
+                        If Google Play says the app isn't available, wait a few minutes and try again: joining can
+                        take a little while to go through.</p>
+                </div>
+            </div>
+            <div class="step">
+                <div class="step-num">4</div>
+                <div>
+                    <h2>Play &amp; keep it for 14 days</h2>
+                    <p>Play a few rounds now and then, and please don't uninstall it or leave the beta for 14 days:
+                        Google needs active testers before it can release the app to everyone.</p>
                 </div>
             </div>
         </section>
         <section>
             <h2>Thank you! 🙏</h2>
-            <p class="small">Please keep the app for at least 14 days: Google needs a group of active testers before it
-                can be released to everyone.
+            <p class="small">Your help really matters.
                 <span th:if="${contactEmail}">Found a bug or have an idea? Write to
                     <a th:href="'mailto:' + ${contactEmail}" th:text="${contactEmail}">email</a>.</span></p>
         </section>
