@@ -133,19 +133,26 @@
 
         }
 
-        /* Title styling */
-        h1{
+        /* Title — the same flag-lettered MUNDOFLAG artwork as the app icon */
+        h1.hub-title{
 
-            font-size:108px;
+            line-height:0;
 
-            letter-spacing:4px;
-
-            color:#3fc1aa;
-
-            text-shadow:
-                0 10px 25px rgba(63,193,170,0.35);
+            padding-bottom:8px;
 
             animation:titleGlow 3s infinite alternate;
+
+        }
+
+        h1.hub-title img{
+
+            display:block;
+
+            width:min(560px, 86vw);
+
+            height:auto;
+
+            margin:0 auto;
 
         }
 
@@ -153,11 +160,11 @@
         @keyframes titleGlow{
 
             from{
-                text-shadow:0 5px 15px rgba(63,193,170,0.3);
+                filter:drop-shadow(0 5px 12px rgba(63,193,170,0.3));
             }
 
             to{
-                text-shadow:0 10px 40px rgba(63,193,170,0.7);
+                filter:drop-shadow(0 8px 26px rgba(63,193,170,0.7));
             }
 
         }
@@ -476,7 +483,7 @@
 
 <!-- Hub header -->
 <div class="hub-header">
-    <h1>MUNDOFLAG</h1>
+    <h1 class="hub-title"><img src="/img/mundoflag-title.png" width="937" height="411" alt="MUNDOFLAG"></h1>
     <p class="hub-subtitle">Pick a game to play</p>
 </div>
 
